@@ -5,24 +5,36 @@
 
 \begin{document}
 
-\begin{hcarentry}{(MYSTUFF)}
-\report{(MY NAME)}
-\status{(PROJECT STATUS IN ONE LINE)}
-\participants{(PARTICIPANTS OTHER THAN MYSELF)}% optional
+\begin{hcarentry}{Idris}
+\report{Edwin Brady}
+\status{active development}
+%\participants{(PARTICIPANTS OTHER THAN MYSELF)}% optional
 \makeheader
 
-Put the text here. What's following are suggestions for the content of an entry.
+Idris is an experimental language with full dependent types.
+Dependent types allow types to be predicated on values, meaning that
+some aspects of a program's behaviour can be specified precisely in
+the type. The language is closely related to Epigram and Agda.
+It is available from \url{http://www.idris-lang.org}, and there is a
+tutorial at \url{http://www.cs.st-andrews.ac.uk/~eb/Idris/tutorial.html}.
 
-(WHAT IS IT?)
+Idris aims to provide a platform for realistic programming with
+dependent types. By realistic, we mean the ability to interact with
+the outside world and use primitive types and operations, to make a
+dependently typed language suitable for systems programming. This
+includes networking, file handling, concurrency, etc.
+Idris emphasises programming over theorem proving, but nevertheless
+integrates with an interactive theorem prover. It is compiled, via C,
+and uses the Boehm-Demers-Weiser garbage collector.
 
-(WHAT IS ITS STATUS? / WHAT HAS HAPPENED SINCE LAST TIME?)
-
-(CAN OTHERS GET IT?)
-
-(WHAT ARE THE IMMEDIATE PLANS?)
+One goal of the project is to show that Idris, and dependently typed
+programming in general, can be efficient enough for the development of
+real world verified software. To this end, Idris is current being used
+to develop a library for verified network protocol implementation,
+with example applications.
 
 \FurtherReading
-  \url{(PROJECT URL)}
+  \url{http://www.idris-lang.org/}
 \end{hcarentry}
 
 \end{document}
