@@ -221,6 +221,11 @@ Epic has if/then/else, so just use that
 >     | ite == name "if_then_else" =
 >         writeSC' (SIf v t e)
 
+>   writeSC' (SApp (SVar n) [arg1, arg2, arg3])
+>     | n == name "__substr" =
+>         "__epic_substr("++writeSC' arg1++", " ++ writeSC' arg2 ++ ", " ++
+>                           writeSC' arg3 ++ ")"
+
 HACK for string equality
 
 >   writeSC' (SApp (SVar n) [arg1, arg2])
@@ -233,6 +238,8 @@ HACK for string equality
 
 >     | n == name "__strCons" =
 >         "__epic_strcons("++writeSC' arg1++", " ++ writeSC' arg2 ++ ")"
+>     | n == name "__strFind" =
+>         "__epic_strFind("++writeSC' arg1++", " ++ writeSC' arg2 ++ ")"
 
 >   writeSC' (SApp (SVar n) [arg1])
 >     | n == name "__strHead" =
@@ -248,6 +255,8 @@ HACK for string equality
 >             list (x:xs) = writeSC' x ++ ", " ++ list xs
 >   writeSC' (SLet n val b) = "let " ++ show n ++ " : Any = " ++ writeSC' val
 >                          ++ " in ("  ++ writeSC' b ++ ")"
+>   writeSC' (SCCase b alts@((SConstAlt _ _):_))
+>                    = writeConstAlts fname erasure (writeSC' b) alts
 >   writeSC' (SCCase b alts) = "case " ++ writeSC' b ++ " of { " ++ 
 >                              writeAlts fname erasure alts
 >                             ++ "}"
@@ -300,6 +309,19 @@ HACK for string equality
 >          list (x:xs) = show x ++ ":Any, " ++ list xs
 > writeAlt n e (SDefault b) = "Default -> " ++ writeSC n e b
 > writeAlt n e _ = "Default -> error \"unhandled case in " ++ show n ++ "\""
+
+> writeConstAlts n e b [] = "error \" unhandled case in " ++ show n ++ "\""
+> writeConstAlts n e b [a] = writeConstAlt n e b a
+> writeConstAlts n e b (x:xs) = writeConstAlt n e b x ++
+>                             " else (" ++ writeConstAlts n e b xs ++ ")"
+
+> writeConstAlt n e b (SConstAlt (Num x) ret) 
+>                   = " if (" ++ b ++ " == " ++ show x ++") then ("
+>                        ++ writeSC n e ret ++ ") "
+> writeConstAlt n e b (SConstAlt (Str x) ret) 
+>                   = " if (__epic_streq(" ++ b ++ ", " ++ show x ++")) then ("
+>                        ++ writeSC n e ret ++ ") "
+> writeConstAlt n e b (SDefault ret) = writeSC n e ret
 
 Chars are just treated as Ints by the compiler, so convert here.
 

@@ -21,6 +21,17 @@ strTail s = if (strNull s) then Nothing else (Just (__strTail s));
 strRev : String -> String; [inline]
 strRev s = __strRev s;
 
+substr : String -> Int -> Int -> String; [inline]
+substr s start len = __substr s start len;
+
+strFind : String -> Char -> Int; [inline]
+strFind s c = __strFind s c;
+
+strSplit : Char -> String -> (String & String);
+strSplit c str = let idx = strFind str c in
+	 if (idx == (-1)) then (str, "") else
+	 (substr str 0 idx, substr str (idx+1) (strLen str - (idx+1)));
+
 -- Some more, faster, string manipulations
 
 strHead' : (x:String) -> (so (not (strNull x))) -> Char;
@@ -116,3 +127,34 @@ strCmp s t =
   if      (__strLT s t) then StrLT
   else if (strEq s t)   then StrEQ
   else                       StrGT;
+
+strSpan' : (Char -> Bool) -> String -> String -> (String & String);
+strSpan' p str acc with strM str {
+  strSpan' p "" acc | StrNil 
+         = (strRev acc, "");
+  strSpan' p (strCons c cs) acc | StrCons _ _
+         = if (p c) then (strRev acc, cs)
+    	      	    else (strSpan' p cs (strCons c acc));
+}
+
+strSpan : (Char -> Bool) -> String -> (String & String);
+strSpan p str = strSpan' p str "";
+
+-- TODO: A collection of these in a Char library.
+
+isSpace : Char -> Bool;
+isSpace ' ' = True;
+isSpace '\t' = True;
+isSpace '\r' = True;
+isSpace '\n' = True;
+isSpace _ = False;
+
+words : String -> List String;
+words str with (strSpan isSpace str) {
+   | ("", "") = Nil;
+   | (word, "") = Cons word Nil;
+   | ("", rest) = words rest;
+   | (word, rest) = --if (word=="") 
+                      -- then (words rest) 
+		       Cons word (words rest);
+}

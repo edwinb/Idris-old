@@ -473,6 +473,8 @@ the appropriate thing, after applying the relevant transformations.
 >              c <- addExternalFn c (opFn StringTail) 1 stringTail "String->String"
 >              c <- addExternalFn c (opFn StringCons) 2 stringCons "Char->String->String"
 >              c <- addExternalFn c (opFn StringRev) 1 stringRev "String->String"
+>              c <- addExternalFn c (opFn StringSub) 3 stringSub "String->Int->Int->String"
+>              c <- addExternalFn c (opFn StringFind) 2 stringFind "String->Char->Int"
 >              c <- addExternalFn c (name "__lazy") 1 runLazy "(A:*)A->A"
 >              c <- addExternalFn c (name "__effect") 1 runEffect "(A:*)A->A"
 >              return c
@@ -604,6 +606,24 @@ the appropriate thing, after applying the relevant transformations.
 > stringRev [Constant x] = case cast x :: Maybe String of
 >                            Just s -> Just (Constant (reverse s))
 >                            _ -> Nothing
+
+> stringSub :: [ViewTerm] -> Maybe ViewTerm
+> stringSub [Constant x, Constant start, Constant len] 
+>         = case (cast x, cast start, cast len) :: 
+>                    (Maybe String, Maybe Int, Maybe Int) of
+>               (Just str, Just st, Just l) -> 
+>                   Just (Constant (take l (drop st str) :: String))
+>               _ -> Nothing
+
+> stringFind :: [ViewTerm] -> Maybe ViewTerm
+> stringFind [Constant x, Constant y] 
+>             = case (cast x, cast y) :: (Maybe String, Maybe Char) of
+>                   (Just s, Just c) -> 
+>                     case findIndex (==c) s of
+>                       Just v -> Just (Constant v)
+>                       Nothing -> Just (Constant ((-1) :: Int))
+>                   _ -> Nothing
+> stringFind _ = Nothing
 
 > runLazy :: [ViewTerm] -> Maybe ViewTerm
 > runLazy [_,x] = Just x

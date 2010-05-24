@@ -85,8 +85,12 @@ and if we don't matching can get confused).
 >     toPat' (Constant c) []
 >             = case (cast c)::Maybe Int of
 >                   Just i -> PConst (Num i)
->                   Nothing -> case (cast c)::Maybe String of
->                                 Just s -> PConst (Str s)
+>                   Nothing -> 
+>                      case (cast c)::Maybe String of
+>                         Just s -> PConst (Str s)
+>                         Nothing ->
+>                             case (cast c)::Maybe Char of
+>                               Just c -> PConst (Num (fromEnum c))
 >     toPat' (Constant _) args 
 >                = error "Can't happen: constant applied to arguments"
 >     toPat' _ _ = PAny

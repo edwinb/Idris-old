@@ -404,6 +404,7 @@ Finally some primitive operations on primitive types.
 
 >         | StringLength | StringGetIndex | StringSubstr
 >         | StringHead | StringTail | StringCons | StringRev
+>         | StringFind | StringSub
 >    deriving (Eq, Enum)
 
 > allOps = [Plus,Minus,Times,Divide,Concat,ShL,ShR,
@@ -453,6 +454,8 @@ Finally some primitive operations on primitive types.
 > opFn StringHead = (name "__strHead")
 > opFn StringTail = (name "__strTail")
 > opFn StringRev = (name "__strRev")
+> opFn StringFind = (name "__strFind")
+> opFn StringSub = (name "__substr")
 > opFn StringCons = (name "__strCons")
 
 > useropFn fn = UN $ "__op_" ++ concat (map opC fn) where
