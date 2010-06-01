@@ -178,6 +178,20 @@ lines str with (strSpan (not . isNL) str) {
    }
 }
 
+-- Generic version of lines/words
+
+splitBy : (Char -> Bool) -> String -> List String;
+splitBy p str with (strSpan (not . p) str) {
+   | ("", "") = Nil;
+   | (word, rest) with choose (strNull rest) {
+       | Left rp with choose (strNull word) {
+         | Left wp = Cons word (splitBy p (strTail' rest rp));
+         | Right wp = splitBy p (strTail' rest rp);
+         }
+       | Right rp = Cons word Nil;
+   }
+}
+
 unlines : List String -> String;
 unlines Nil = "";
 unlines (Cons x xs) = x ++ "\n" ++ unlines xs;
