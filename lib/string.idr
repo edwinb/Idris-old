@@ -133,7 +133,7 @@ strSpan' p str acc with strM str {
   strSpan' p "" acc | StrNil 
          = (strRev acc, "");
   strSpan' p (strCons c cs) acc | StrCons _ _
-         = if (p c) then (strRev acc, cs)
+         = if (not (p c)) then (strRev acc, (strCons c cs))
     	      	    else (strSpan' p cs (strCons c acc));
 }
 
@@ -149,12 +149,52 @@ isSpace '\r' = True;
 isSpace '\n' = True;
 isSpace _ = False;
 
+isNL : Char -> Bool;
+isNL '\r' = True;
+isNL '\n' = True;
+isNL _ = False;
+
 words : String -> List String;
-words str with (strSpan isSpace str) {
+words str with (strSpan (not . isSpace) str) {
    | ("", "") = Nil;
-   | (word, "") = Cons word Nil;
-   | ("", rest) = words rest;
-   | (word, rest) = --if (word=="") 
-                      -- then (words rest) 
-		       Cons word (words rest);
+   | (word, rest) with choose (strNull rest) {
+       | Left rp with choose (strNull word) {
+         | Left wp = Cons word (words (strTail' rest rp));
+         | Right wp = words (strTail' rest rp);
+         }
+       | Right rp = Cons word Nil;
+   }
 }
+
+lines : String -> List String;
+lines str with (strSpan (not . isNL) str) {
+   | ("", "") = Nil;
+   | (line, rest) with choose (strNull rest) {
+       | Left rp with choose (strNull line) {
+         | Left wp = Cons line (lines (strTail' rest rp));
+         | Right wp = lines (strTail' rest rp);
+         }
+       | Right rp = Cons line Nil;
+   }
+}
+
+unlines : List String -> String;
+unlines Nil = "";
+unlines (Cons x xs) = x ++ "\n" ++ unlines xs;
+
+unwords : List String -> String;
+unwords Nil = "";
+unwords (Cons x Nil) = x;
+unwords (Cons x xs) = x ++ " " ++ unwords xs;
+
+trimLeft : String -> String;
+trimLeft str with (strSpan isSpace str) {
+   | (spcs, rest) = rest;
+}
+
+trimRight : String -> String;
+trimRight x = strRev (trimLeft (strRev x));
+
+trim : String -> String;
+trim x = trimLeft (strRev (trimLeft (strRev x)));
+

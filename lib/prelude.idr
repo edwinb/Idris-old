@@ -46,14 +46,6 @@ infixl 9 *,/;
 (>>) : Int -> Int -> Int; [inline]
 (>>) x y = __shr x y;
  
-include "nat.idr";
-include "maybe.idr";
-include "io.idr";
-include "either.idr";
-include "tactics.idr";
-include "vect.idr";
-include "string.idr";
-
 -- Function composition
 
 infixl 9 .;
@@ -66,3 +58,11 @@ fst (x, y) = x;
 
 snd : (a & b) -> b; [inline]
 snd (x, y) = y;
+
+include "nat.idr";
+include "maybe.idr";
+include "io.idr";
+include "either.idr";
+include "tactics.idr";
+include "vect.idr";
+include "string.idr";
