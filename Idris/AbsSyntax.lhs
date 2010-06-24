@@ -915,6 +915,8 @@ scripts
 >     toIvorS (RPure t) = toIvorS t
 >     toIvorS RRefl = return $ apply (Name Unknown (name "refl")) [Placeholder]
 >     toIvorS (RError f l x) = error (f ++ ":" ++ show l ++ ":" ++ x)
+>     toIvorS x = error ("Can't happen, toIvorS: " ++ show x)
+
 >     mkName (UN n) i = UN (n++"_"++show i)
 >     mkName (MN n j) i = MN (n++"_"++show i) j
 
@@ -1035,6 +1037,16 @@ allowing recursion in them).
 >           fixesd (DoBinding f l n x y) = DoBinding f l n (fixes x) (fixes y)
 >           fixesd (DoLet f l n x y) = DoLet f l n (fixes x) (fixes y)
 >           fixesd (DoExp f l x) = DoExp f l (fixes x)
+
+> syntaxClause :: Ctxt IvorFun -> Implicit -> UserOps -> RawClause ->
+>                 RawClause
+> syntaxClause ctxt imp uo (RawClause l r)
+>      = (RawClause (syntax ctxt imp uo l)
+>                   (syntax ctxt imp uo r))
+> syntaxClause ctxt imp uo (RawWithClause lhs prf scr def)
+>      = (RawWithClause (syntax ctxt imp uo lhs) prf
+>                       (syntax ctxt imp uo scr)
+>                       (map (syntaxClause ctxt imp uo) def))
 
 Add placeholders so that implicit arguments can be filled in. Also desugar user infix apps.
 FIXME: I think this'll fail if names are shadowed.

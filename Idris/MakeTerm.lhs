@@ -27,8 +27,9 @@ attached).
 >           ity = makeIvorTerm using ui uo n ctxt rty
 >           extCtxt = addEntry ctxt (thisNamespace using) n (IvorFun Nothing (Just ity) 
 >                                       imp Nothing decl flags (map (+p) (getLazy ty)) (map (+p) (getStatic ty)))
+>           clauses' = map (\ (n, c) -> (n, syntaxClause ctxt using uo c)) clauses 
 >           (clausesm, (_, newms)) 
->                 = runState (insertMetasClauses n clauses) (0, [])
+>                 = runState (insertMetasClauses n clauses') (0, [])
 >           pclauses = map (mkPat extCtxt imp) clausesm
 >           newdefs = reverse (map mkPrf newms) in
 >       (IvorFun (Just (toIvorName (fullName using n))) 
