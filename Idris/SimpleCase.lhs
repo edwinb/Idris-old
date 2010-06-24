@@ -41,10 +41,10 @@
 >                 do (i, fns) <- get
 >                    let params = bs
 >                    let paramArgs = map (Name Unknown) (map fst params)
->                    let newdef = Patterns (getNewDef paramArgs (deAnnot (args!!3)))
->                    let argtype = args!!0
->                    let rettype = args!!1
->                    let scrutinee = args!!2
+>                    let newdef = Patterns (getNewDef paramArgs (deAnnot (args!!!(3,"FAIL3"))))
+>                    let argtype = args!!!(0, "FAIL0")
+>                    let rettype = args!!!(1, "FAIL1")
+>                    let scrutinee = args!!!(2, "FAIL2")
 >                    let newty = getNewType params argtype rettype
 >                    let newname = name (show (MN (show root) i))
 >                    let newfn = (newname, newty, newdef)
@@ -86,13 +86,14 @@
 > deAnnot x = x
 
 > addPatternDefSC :: Context -> Name -> ViewTerm -> Patterns -> 
->                    Maybe [(Name, Int)] ->
+>                    Maybe [(Name, Int)] -> Statics ->
 >                    TTM (Context, [(Name, ViewTerm)])
-> addPatternDefSC ctxt nm ty ps spec = do
+> addPatternDefSC ctxt nm ty ps spec sts = do
 >     -- just allow general recursion for now
 >     let opts = case spec of
 >                  Nothing -> [Holey, Partial, GenRec]
->                  Just fns -> [Holey, Partial, GenRec, Specialise fns]
+>                  Just fns -> [Holey, Partial, GenRec, Specialise fns,
+>                               SpecStatic (map mkss sts)]
 >     (ctxt', newdefs) <- addPatternDef ctxt nm ty ps opts
 >     (_, patts) <- getPatternDef ctxt' nm
 >     let (ps', ds) = liftCases nm patts
@@ -103,8 +104,9 @@
 >          return (ctxt', newdefs++newdefs')
 >  where addAll ctxt [] nds = return (ctxt, nds)
 >        addAll ctxt ((n,ty,ps):rs) nds = do
->          (ctxt', newdefs') <- addPatternDefSC ctxt n ty ps spec
+>          (ctxt', newdefs') <- addPatternDefSC ctxt n ty ps spec sts
 >          addAll ctxt' rs (newdefs'++nds) 
+>        mkss (n, (statics, arity, ty)) = (n, (statics, arity))
 
 > addMeta :: Bool ->
 >            Ctxt IvorFun -> Context -> 

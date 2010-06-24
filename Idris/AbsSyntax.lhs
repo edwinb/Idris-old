@@ -246,6 +246,7 @@ Raw terms, as written by the programmer with no implicit arguments added.
 >              | RConst String Int Constant
 >              | RPlaceholder
 >              | RMetavar Id
+>              | RMetavarPrf Id [ITactic] Bool -- Bool for if proof is allowed to fail
 >              | RInfix String Int Op RawTerm RawTerm
 >              | RUserInfix String Int Bool String RawTerm RawTerm
 >              | RDo [Do]
@@ -774,6 +775,83 @@ programmer doesn't have to write them down inside the param block.
 
 > defDo = UI bindName 2 retName 1 retName 1 applyName 2
 
+Give names to unnamed metavariables, and record any associated proof
+scripts
+
+> insertMetas :: Id -> RawTerm -> State (Int, [(Id, [ITactic])]) RawTerm
+> insertMetas fname tm = im tm
+>     where im (RMetavarPrf (UN "") tacs prf)
+>                 = do (h, ts) <- get
+>                      let nm = mkName fname h
+>                      put (h+1, (nm, tacs):ts)
+>                      return $ RMetavar nm
+>           im (RApp f l x a) 
+>               = do x' <- im x
+>                    a' <- im a
+>                    return $ RApp f l x' a'
+>           im (RAppImp f l arg x a) 
+>               = do x' <- im x
+>                    a' <- im a
+>                    return $ RAppImp f l arg x' a'
+>           im (RBind n bind t)
+>               = do bind' <- imb bind
+>                    t' <- im t
+>                    return $ RBind n bind' t
+>           im (RInfix f l op x y)
+>               = do x' <- im x
+>                    y' <- im y
+>                    return $ RInfix f l op x' y'
+>           im (RUserInfix f l b op x y)
+>               = do x' <- im x
+>                    y' <- im y
+>                    return $ RUserInfix f l b op x' y'
+>           im (RDo ds) = do ds' <- mapM imd ds
+>                            return $ RDo ds'
+>           im (RIdiom t) = do t' <- im t
+>                              return $ RIdiom t'
+>           im (RPure t) = do t' <- im t
+>                             return $ RPure t'
+>           im x = return x
+
+>           imb (Pi p opts t) = do t' <- im t
+>                                  return $ Pi p opts t'
+>           imb (Lam t) = do t' <- im t
+>                            return $ Lam t
+>           imb (RLet t v) = do t' <- im t
+>                               v' <- im v
+>                               return $ RLet t' v'
+
+>           imd (DoBinding f l i x y)
+>               = do x' <- im x
+>                    y' <- im y
+>                    return $ DoBinding f l i x' y'
+>           imd (DoLet f l i x y)
+>               = do x' <- im x
+>                    y' <- im y
+>                    return $ DoLet f l i x' y'
+>           imd (DoExp f l x)
+>               = do x' <- im x
+>                    return $ DoExp f l x'
+
+>           mkName (UN n) i = UN ("__"++n++"_"++show i)
+>           mkName (MN n j) i = MN ("__"++n++"_"++show i) j
+
+
+> insertMetasClauses :: Id -> [(Id, RawClause)] -> 
+>                       State (Int, [(Id, [ITactic])]) [(Id, RawClause)]
+> insertMetasClauses fn xs = mapM imcp xs where
+>     imcp (n, t) = do t' <- imc t
+>                      return (n, t')
+>     imc (RawClause lhs rhs) = 
+>         do lhs' <- insertMetas fn lhs
+>            rhs' <- insertMetas fn rhs
+>            return (RawClause lhs' rhs')
+>     imc (RawWithClause lhs prf scr def) =
+>         do lhs' <- insertMetas fn lhs
+>            scr' <- insertMetas fn scr
+>            def' <- mapM imc def
+>            return (RawWithClause lhs' prf scr' def')
+
 > toIvor :: UserOps -> UndoInfo -> Id -> RawTerm -> ViewTerm
 > toIvor uo ui fname tm = evalState (toIvorS tm) (0,1)
 >   where
@@ -861,77 +939,58 @@ Convert a raw term to an ivor term, adding placeholders
 >                  = let expraw = addPlaceholders ctxt using uo tm in
 >                                 toIvor uo ui n expraw
 
-Add placeholders so that implicit arguments can be filled in. Also desugar user infix apps.
-FIXME: I think this'll fail if names are shadowed.
+Apply syntax macros, and fixity declarations. 
+Assume they are terminating (perhaps check this by not
+allowing recursion in them).
 
-> addPlaceholders :: Ctxt IvorFun -> Implicit -> UserOps -> RawTerm -> RawTerm
-> addPlaceholders ctxt using (UO uo _ _ syns) tm = ap [] tm
->     -- Count the number of args we've made explicit in an application
->     -- and don't add placeholders for them. Reset the counter if we get
->     -- out of an application
->     where ap ex v@(RVar f l n _)
->            = case doSynN f l n syns of
->               RVar _ _ n _ ->
->                 case ctxtLookupName ctxt (thisNamespace using) n of
->                   Right (ifn@(IvorFun _ (Just ty) imp _ _ _ _ _), fulln) -> 
->                     let pargs = case lookup n pnames of
->                                   Nothing -> []
->                                   Just ids -> map (\i -> RVar f l i Bound) ids in
->                     mkApp f l (RVar f l fulln (getNameType ifn))
->                               ((mkImplicitArgs 
->                                (map fst (fst (getBinders ty []))) imp ex) ++ pargs)
->                   Left err@(Ambiguous _ ns) -> RError f l (show err) -- RVars f l ns
->                   Left err@(WrongNamespace _ _) -> RError f l (show err)
->                   Right (ifn, fulln) -> RVar f l fulln (getNameType ifn)
->                   _ -> RVar f l n Unknown
->               t -> ap ex t
->           ap ex (RExpVar f l n)
->               = case ctxtLookupName ctxt (thisNamespace using) n of
->                   Right (ifn@(IvorFun _ (Just ty) imp _ _ _ _ _), fulln) -> RVar f l fulln (getNameType ifn)
->                   Left err@(Ambiguous _ _) -> RError f l (show err)
->                   Left err@(WrongNamespace _ _) -> RError f l (show err)
->                   Right (ifn, fulln) -> RVar f l fulln (getNameType ifn)
->                   _ -> RVar f l n Unknown
->           ap ex (RAppImp file line n f a) = (ap ((toIvorName n,(ap [] a)):ex) f)
->           ap ex app@(RApp file line f a) = 
->               case doSyn app syns f [a] of
->                   RApp _ _ f a -> RApp file line (ap ex f) (ap [] a)
->                   t -> ap ex t
->           ap ex (RBind n (Pi p l ty) sc)
->               = RBind n (Pi p l (ap [] ty)) (ap [] sc)
->           ap ex (RBind n (Lam ty) sc)
->               = RBind n (Lam (ap [] ty)) (ap [] sc)
->           ap ex (RBind n (RLet val ty) sc)
->               = RBind n (RLet (ap [] val) (ap [] ty)) (ap [] sc)
->           ap ex (RInfix file line op l r) = RInfix file line op (ap [] l) (ap [] r)
->           ap ex fix@(RUserInfix _ _ _ _ _ _)
->               = case fixFix uo fix of
->                   (RUserInfix file line _ op l r) ->
->                       ap ex (RApp file line 
->                              (RApp file line (RVar file line (useropFn op) Free) l) r)
->                   (RError f l x) -> RError f l x
->           ap ex (RDo ds) = RDo (map apdo ds)
->           ap ex (RIdiom tm) = RIdiom (ap [] tm)
->           ap ex (RPure tm) = RPure (ap [] tm)
->           ap ex r = r
+> syntax :: Ctxt IvorFun -> Implicit -> UserOps -> RawTerm -> RawTerm
+> syntax ctxt using (UO uo _ _ syns) tm 
+>   = let ans = syn (fixes tm) in
+>        -- trace ("BEFORE: " ++ showImp False (fixes tm) ++ "\nAFTER: " ++
+>         --      showImp False ans) 
+>         ans
+>     where syn (RVar f l n _) = doSynN f l n syns
+>           syn app@(RApp file line f a) 
+>                   = doSyn (RApp file line (syn f) (syn a)) 
+>                            syns (syn f) [syn a]
+>           syn (RAppImp file line n f a) = RAppImp file line n (syn f) (syn a)
+>           syn (RBind n (Pi p opts t) sc)
+>               = RBind n (Pi p opts (syn t)) (syn sc)
+>           syn (RBind n (Lam t) sc)
+>               = RBind n (Lam (syn t)) (syn sc)
+>           syn (RBind n (RLet v t) sc)
+>               = RBind n (RLet (syn v) (syn t)) (syn sc)
+>           syn (RInfix f l op x y)
+>               = RInfix f l op (syn x) (syn y)
+>           syn (RUserInfix file line b op l r)
+>               = RUserInfix file line b op (syn l) (syn r)
+>               -- = RUserInfix f l b op (syn x) (syn y)
+>           syn (RDo ds) = RDo $ map synd ds
+>           syn (RIdiom t) = RIdiom (syn t)
+>           syn (RPure t) = RPure (syn t)
+>           syn t = t
 
->           apdo (DoExp f l r) = DoExp f l (ap [] r)
->           apdo (DoBinding file line x t r) = DoBinding file line x (ap [] t) (ap [] r)
->           apdo (DoLet file line x t r) = DoLet file line x (ap [] t) (ap [] r)
-
->           pnames = paramNames using
+>           synd (DoBinding f l n x y) 
+>                = DoBinding f l n (syn x) (syn y)
+>           synd (DoLet f l n x y) 
+>                = DoLet f l n (syn x) (syn y)
+>           synd (DoExp f l x) 
+>                = DoExp f l (syn x)
 
 >           doSyn o syns (RApp _ _ f a) args = doSyn o syns f (a:args)
 >           doSyn o syns v args 
->                = case ap [] v of
+>                = case v of
 >                      RVar f l n _ -> 
 >                        case findSyn n syns of
->                          Just (a, rhs) -> replSyn f l rhs (zip a args)
+>                          Just (a, rhs) -> 
+>                              if (length a == length args)
+>                                 then syn $ replSyn f l rhs (zip a args)
+>                                 else o
 >                          Nothing -> o
 >                      _ -> o
 
 >           doSynN f l n syns = case findSyn n syns of
->                             Just ([], rhs) -> replSyn f l rhs []
+>                             Just ([], rhs) -> syn $ replSyn f l rhs []
 >                             _ -> RVar f l n Unknown
 
 >           findSyn n [] = Nothing
@@ -950,6 +1009,88 @@ FIXME: I think this'll fail if names are shadowed.
 >           replSyn f l (RAppImp _ _ x fn a) as
 >                 = RAppImp f l x (replSyn f l fn as) (replSyn f l a as)
 >           replSyn _ _ x _ = x
+
+>           fixes fix@(RUserInfix _ _ _ _ _ _) =
+>               case fixFix uo fix of
+>                 (RUserInfix file line _ op l r) ->
+>                    fixes (RApp file line 
+>                           (RApp file line 
+>                            (RVar file line (useropFn op) Free) l) r)
+>                 (RError f l x) -> RError f l x
+>           fixes (RApp file line f a) = RApp file line (fixes f) (fixes a)
+>           fixes (RAppImp file line n f a) 
+>                     = RAppImp file line n (fixes f) (fixes a)
+>           fixes (RBind n (Lam t) sc) = RBind n (Lam (fixes t)) (fixes sc)
+>           fixes (RBind n (Pi p opts t) sc)
+>                 = RBind n (Pi p opts (fixes t)) (fixes sc)
+>           fixes (RBind n (RLet v t) sc)
+>                 = RBind n (RLet (fixes v) (fixes t)) (fixes sc)
+>           fixes (RInfix file line op l r)
+>                 = RInfix file line op (fixes l) (fixes r)
+>           fixes (RIdiom t) = RIdiom (fixes t)
+>           fixes (RPure t) = RPure (fixes t)
+>           fixes (RDo d) = RDo (map fixesd d)
+>           fixes t = t
+
+>           fixesd (DoBinding f l n x y) = DoBinding f l n (fixes x) (fixes y)
+>           fixesd (DoLet f l n x y) = DoLet f l n (fixes x) (fixes y)
+>           fixesd (DoExp f l x) = DoExp f l (fixes x)
+
+Add placeholders so that implicit arguments can be filled in. Also desugar user infix apps.
+FIXME: I think this'll fail if names are shadowed.
+
+> addPlaceholders :: Ctxt IvorFun -> Implicit -> UserOps -> RawTerm -> RawTerm
+> addPlaceholders ctxt using uops@(UO uo _ _ syns) tm 
+>                     = ap [] (syntax ctxt using uops tm)
+>     -- Count the number of args we've made explicit in an application
+>     -- and don't add placeholders for them. Reset the counter if we get
+>     -- out of an application
+>     where ap ex v@(RVar f l n _)
+>            = case ctxtLookupName ctxt (thisNamespace using) n of
+>                   Right (ifn@(IvorFun _ (Just ty) imp _ _ _ _ _), fulln) -> 
+>                     let pargs = case lookup n pnames of
+>                                   Nothing -> []
+>                                   Just ids -> map (\i -> RVar f l i Bound) ids in
+>                     mkApp f l (RVar f l fulln (getNameType ifn))
+>                               ((mkImplicitArgs 
+>                                (map fst (fst (getBinders ty []))) imp ex) ++ pargs)
+>                   Left err@(Ambiguous _ ns) -> RError f l (show err) -- RVars f l ns
+>                   Left err@(WrongNamespace _ _) -> RError f l (show err)
+>                   Right (ifn, fulln) -> RVar f l fulln (getNameType ifn)
+>                   _ -> RVar f l n Unknown
+>           ap ex (RExpVar f l n)
+>               = case ctxtLookupName ctxt (thisNamespace using) n of
+>                   Right (ifn@(IvorFun _ (Just ty) imp _ _ _ _ _), fulln) -> RVar f l fulln (getNameType ifn)
+>                   Left err@(Ambiguous _ _) -> RError f l (show err)
+>                   Left err@(WrongNamespace _ _) -> RError f l (show err)
+>                   Right (ifn, fulln) -> RVar f l fulln (getNameType ifn)
+>                   _ -> RVar f l n Unknown
+>           ap ex (RAppImp file line n f a) = (ap ((toIvorName n,(ap [] a)):ex) f)
+>           ap ex app@(RApp file line f a) = 
+>                   RApp file line (ap ex f) (ap [] a)
+>           ap ex (RBind n (Pi p l ty) sc)
+>               = RBind n (Pi p l (ap [] ty)) (ap [] sc)
+>           ap ex (RBind n (Lam ty) sc)
+>               = RBind n (Lam (ap [] ty)) (ap [] sc)
+>           ap ex (RBind n (RLet val ty) sc)
+>               = RBind n (RLet (ap [] val) (ap [] ty)) (ap [] sc)
+>           ap ex (RInfix file line op l r) = RInfix file line op (ap [] l) (ap [] r)
+>           ap ex fix@(RUserInfix file line _ op l r)
+>               = -- case fixFix uo fix of
+>                 --  (RUserInfix file line _ op l r) ->
+>                 ap ex (RApp file line 
+>                              (RApp file line (RVar file line (useropFn op) Free) l) r)
+>                 --  (RError f l x) -> RError f l x
+>           ap ex (RDo ds) = RDo (map apdo ds)
+>           ap ex (RIdiom tm) = RIdiom (ap [] tm)
+>           ap ex (RPure tm) = RPure (ap [] tm)
+>           ap ex r = r
+
+>           apdo (DoExp f l r) = DoExp f l (ap [] r)
+>           apdo (DoBinding file line x t r) = DoBinding file line x (ap [] t) (ap [] r)
+>           apdo (DoLet file line x t r) = DoLet file line x (ap [] t) (ap [] r)
+
+>           pnames = paramNames using
 
 Go through the arguments; if an implicit argument has the same name as one
 in our list of explicit names to add, add it.
@@ -1276,3 +1417,5 @@ we check (i.e. the non-bracketed part) is smaller.
 Everything else, we ony work at the top level.
 
 > fixFix' _ x = x
+
+> (!!!) xs (x, msg) = if x >= length xs then error msg else xs!!x

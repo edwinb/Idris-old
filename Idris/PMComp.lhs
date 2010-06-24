@@ -152,7 +152,7 @@ rather than indices.)
 >          allArgs ((Clause args rest):cs) = args:(allArgs cs)
 
 >          pick [] _ = []
->          pick (i:is) xs = if (i<=length xs) then xs!!i : (pick is xs)
+>          pick (i:is) xs = if (i<length xs) then xs!!i : (pick is xs)
 >                              else error ("ARGH! pick " ++ show (i,xs,cs))
 
 Count the number of different constructor forms in xs

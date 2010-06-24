@@ -1,2 +1,48 @@
 \section{Introduction}
 
+\Idris{} is a functional programming language with full dependent
+types. It has been designed and developed with an emphasis on
+\emph{systems} programming --- to this end, from the start we have
+taken efficiency and interaction with the outside world seriously. 
+
+[What can we do now that we couldn't before? Generic programming,
+  lightweight verification of low level systems code. Real
+  applications which interact with the outside world.]
+
+What does it mean to be ``practical''? Or ``efficient''?
+
+Practical --- interaction with operating systems, web browsers,
+etc. Can we run ``Real World'' programs? Can we ``tackle the awkward
+squad''? We evaluate this qualitatively by implementing a web
+application framework with safety guarantees enforced by the type
+system.
+
+Efficient --- are the resulting applications comparable with those
+written in more mainstream languages (Java, C, etc are considered
+``fast enough'', even Python, Perl, or Haskell. Is there anything in
+DTP which gets in the way of this?) It is hard to compare languages
+fairly for efficiency, but we attempt to do so by... [comparing
+  application performance?]
+
+\subsection{Dependent Types}
+
+Definition and brief example.
+
+\subsection{Contributions}
+
+What do we learn from developing applications in a language with full
+dependent types (as opposed to, say, theorem proving, or using more
+restricted forms such as GADTs?).
+
+Programming techniques developed in the context of DTP (e.g. views,
+generic programming, verified EDSLs) can be relevant for real world
+applications, in that they give new abstractions and improve
+confidence in correctness. [Demonstrate by writing one and making
+  claims about correctness].
+
+We identify essential features of a compiler for a dependently typed
+language. [Demonstrate they are essential by measuring performance
+  of real application with and without.]
+
+By developing an application, exploting dependent types where
+appropriate, we identify common dependently typed programming idioms.

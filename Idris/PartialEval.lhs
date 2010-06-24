@@ -133,7 +133,7 @@ Pull out the arguments that are statically known
 >      newTy (Annotation a x) rest = Annotation a (newTy x rest)
 >      newTy x _ = x
 
->      known args i = all nknown (namesTypesIn (args!!i))
+>      known args i = all nknown (namesTypesIn (args!!!(i,"known fail")))
 >      nknown x@(_,Free) = True
 >      nknown x@(_,DataCon) = True
 >      nknown x@(_,TypeCon) = True
@@ -246,8 +246,8 @@ no more. Add any dependencies on static arguments which are dependencies on
 >          getExtras ss ar (Just t) 
 >             = let ds = [0..ar-1] \\ ss
 >                   args = TT.getArgTypes t
->                   stypes = map (\x -> snd (args!!x)) ss
->                   dtypes = map (\x -> snd (args!!x)) ds
+>                   stypes = map (\x -> snd (args!!!(x,"extra 1"))) ss
+>                   dtypes = map (\x -> snd (args!!!(x,"extra 2"))) ds
 >                   stnames = concatMap namesIn stypes 
 >                   dnames = concatMap namesIn dtypes 
 >                   newss_in = nub (ss ++ (mapMaybe (\x -> lookupIdx 0 x args) stnames)) 

@@ -133,8 +133,8 @@ strSpan' p str acc with strM str {
   strSpan' p "" acc | StrNil 
          = (strRev acc, "");
   strSpan' p (strCons c cs) acc | StrCons _ _
-         = if (not (p c)) then (strRev acc, (strCons c cs))
-    	      	    else (strSpan' p cs (strCons c acc));
+         = if (p c) then (strSpan' p cs (strCons c acc))
+    	      	    else (strRev acc, (strCons c cs));
 }
 
 strSpan : (Char -> Bool) -> String -> (String & String);
@@ -211,4 +211,17 @@ trimRight x = strRev (trimLeft (strRev x));
 
 trim : String -> String;
 trim x = trimLeft (strRev (trimLeft (strRev x)));
+
+mapStr : (Char -> Char) -> String -> String;
+mapStr f str with strM str {
+ mapStr f ""             | StrNil      = "";
+ mapStr f (strCons c cs) | StrCons _ _ = strCons (f c) (mapStr f cs);
+}
+
+toLower : Char -> Char;
+toLower x = let xi = __charToInt x in
+	    let Ai = __charToInt 'A' in
+	    let ai = __charToInt 'a' in
+	    let Zi = __charToInt 'Z' in
+	    if (xi>=Ai && xi<=Zi) then (__intToChar (xi+ai-Ai)) else x;
 

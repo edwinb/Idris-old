@@ -452,7 +452,8 @@ the appropriate thing, after applying the relevant transformations.
 >                                "Int->Int->Int"
 >              c <- addBinOp c (opFn Concat) ((++)::String->String->String)
 >                                "String->String->String"
->              c <- addBinOp c (opFn StringGetIndex) ((!!)::String->Int->Char)
+>              c <- addBinOp c (opFn StringGetIndex) 
+>                       ((\str i -> str!!!(i,"stringGetIndex fail"))::String->Int->Char)
 >                                "String->Int->Char"
 >              c <- addBinOp c (opFn ShL) (shl::Int->Int->Int) "Int->Int->Int"
 >              c <- addBinOp c (opFn ShR) (shr::Int->Int->Int) "Int->Int->Int"

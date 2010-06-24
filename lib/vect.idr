@@ -59,3 +59,7 @@ isElem : (eq:(a:A)->(b:A)->(Maybe (a=b)))->
 isElem eq i x VNil = Nothing;
 isElem eq fO x (y :: xs) = isElemAuxO y (eq x y);
 isElem eq (fS i) x (y :: xs) = mMap later (isElem eq i x xs);
+
+vfoldl : (a -> b -> a) -> a -> (Vect b n) -> a;
+vfoldl f z VNil = z;
+vfoldl f z (x :: xs) = vfoldl f (f z x) xs;

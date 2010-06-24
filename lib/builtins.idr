@@ -45,5 +45,15 @@ proof_bind (__mkProof a) p = p a;
 -- using this are not to be trusted!
 
 __Prove_Anything : {A:Set} -> A;
-__Suspend_Disbelief : (m:A) -> (n:A) -> (m = n);
 
+-- Generate a refl so that __eq_repl can reduce.
+
+__Suspend_Disbelief : (m:A) -> (n:A) -> (m = n);
+__Suspend_Disbelief m n ?= refl m; [__disbelieve]
+
+__disbelieve proof {
+	%intro;
+	%use value;
+	%refine __Prove_Anything;
+	%qed;
+};

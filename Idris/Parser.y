@@ -170,7 +170,7 @@ import Debug.Trace
 -- All the things I don't want to cause a reduction inside a lam...
 %nonassoc name inttype chartype floattype stringtype int char string float bool refl do type
           empty unit '_' ptrtype handletype locktype metavar NONE brackname lazy
-          oid '~' lpair PAIR return transarrow exists
+          oid '~' lpair PAIR return transarrow exists proof
 %left APP
 %nonassoc if then else
 
@@ -535,6 +535,7 @@ NoAppTerm : Name File Line { RVar $2 $3 $1 Unknown }
           | '(' Term ')' { bracket $2 }
           | '~' NoAppTerm { RPure $2 }
           | metavar { RMetavar $1 }
+          | '[' proof Tactics ']' { RMetavarPrf (UN "") $3 False }
           | '!' Name File Line { RExpVar $3 $4 $2 }
 --          | '{' TypedBind '}' arrow NoAppTerm
 --                { doBind (Pi Im) $2 $5 }
@@ -682,7 +683,12 @@ ProofScript : proof '{' Tactics '}' { $3 }
 
 Tactics :: { [ITactic] }
 Tactics : Tactic ';' { [$1] }
+        | Tactic { [$1] }
         | Tactic ';' Tactics { $1:$3 }
+
+TacticList :: { [ITactic] }
+TacticList : Tactic { [$1] }
+           | Tactic ',' Tactics { $1:$3 }
 
 Line :: { LineNumber }
      : {- empty -}      {% getLineNo }

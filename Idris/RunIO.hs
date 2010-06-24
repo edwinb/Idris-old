@@ -8,6 +8,7 @@ module Idris.RunIO where
 import Ivor.TT
 import Ivor.Shell
 import Ivor.Construction
+import Idris.AbsSyntax
 
 import Data.Typeable
 import Data.IORef
@@ -176,7 +177,7 @@ putMem loc val = do let (MemState mem) = memory
 getMem :: Int -> IO Value
 getMem loc = do let (MemState mem) = memory
                 (p, content) <- readIORef mem
-                return (content!!loc)
+                return (content!!!(loc, "getMem fail"))
 
 update :: [a] -> Int -> a -> [a]
 update [] _ _ = []

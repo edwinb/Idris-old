@@ -101,6 +101,9 @@ interpTy (TyHandle n) = Fin n;
 interpTy TyUnit = ();
 interpTy (TyLift A) = A;
 
+data ErrEq : A -> A -> String -> Set where
+   refl' : {a:A} -> ErrEq a a str;
+
 data [noElim] 
      Lang : (Vect FileState n) -> (Vect FileState n') -> Ty ->Set where
    ACTION : |(act:IO A) -> (Lang ts ts (TyLift A))
@@ -127,7 +130,7 @@ data [noElim]
 	  (Lang ts (snoc ts (Open p)) (TyHandle (S n)))
  | CLOSE : (i : Fin n) -> (OpenH i (getPurpose i ts) ts) ->
 	   (Lang ts (update i Closed ts) TyUnit) 
- | GETLINE : (i:Fin n) -> (p:OpenH i Reading ts) ->
+ | GETLINE : (i:Fin n) -> (p:OpenH i Reading ts) -> 
              (Lang ts ts (TyLift String))
  | EOF : (i:Fin n) -> (p:OpenH i Reading ts) ->
          (Lang ts ts (TyLift Bool))

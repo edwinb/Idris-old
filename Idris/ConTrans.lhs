@@ -300,7 +300,7 @@ is either a pattern or unused (modulo recursion), do this to it:
 >      getPlPos acc p p' = error $ "getPlPos : " ++ show (n,acc,p,p')
 
 >      plArg args args' r' x 
->            = x<length args && args!!x == Placeholder && recGuard x n r' (namesIn (args'!!x))
+>            = x<length args && args!!x == Placeholder && recGuard x n r' (namesIn (args'!!!(x,"args' fail")))
 >      args ((PClause args _ r):_) = length args
 >      args ((PWithClause _ args _ (Patterns rest)):_) = length args
 >      args [] = 0
@@ -398,7 +398,7 @@ the argument in position i.
 >                    (Name, (ViewTerm, Patterns)) -> [Transform]
 > makeIDTransform raw ctxt ctrans (n, (ty, patsin@(Patterns (_:_))))
 >   = let Patterns pats = transform ctxt ctrans [] n patsin 
->         argpos = zip [0..] (arguments (pats!!0))
+>         argpos = zip [0..] (arguments (pats!!!(0,"pats fail")))
 >         keepArgs = [0..length argpos-1] \\ (invariants argpos (map arguments pats))
 >         trans = Trans (show n ++ "_ID") 
 >                       (Just (mkIDTrans n keepArgs (length argpos)))
@@ -425,7 +425,7 @@ is indeed invariant)
 
 >          stripInv t (PClause args _ ret) = PClause args [] (doTrans t ret)
 >          stripInv t w = w
->          idClause [k] t@(PClause args _ ret) | k<length args = args!!k == ret
+>          idClause [k] t@(PClause args _ ret) | k<length args = args!!!(k,"idClause fail") == ret
 >          idClause _ _ = False
 
 > makeIDTransform raw ctxt ctrans _ = []
@@ -435,7 +435,7 @@ is indeed invariant)
 >             = let fn = getApp tm
 >                   args = getFnArgs tm in
 >               if fname == n && length args == arity && keep<length args then
->                   args!!keep
+>                   args!!!(keep, "mkIDfail")
 >                   else tm
 
 > mkIDTrans _ _ _ tm = tm

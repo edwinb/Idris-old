@@ -40,6 +40,7 @@ already simple case trees.
 >               let pcomp = map (pmCompDef raw ctxt erasure trans vtrans) pdefs
 >               let declouts = filter (/="") (map epicDecl decls)
 >               let clink = filter (/="") (map epicLink decls)
+>               -- dumpNames pcomp
 >               let scs = map (\ (n, inl, sc) -> (n, inl, transformSC erasure sc)) 
 >                           $ allSCs pcomp
 >               catch (do compileAll raw ctxt ofile erasure clink declouts scs
@@ -49,7 +50,7 @@ already simple case trees.
 >                               return False)
 >    where allSCs [] = []
 >          allSCs ((x,gen,(args,def)):xs) 
->                       = -- trace (show (x,def)) $
+>                       = -- trace (show (x,args)) $
 >                         let lifted = lambdaLift ctxt ist x args def
 >                             scfuns = map (\ (n,args,sc) -> 
 >                                          (n, scFun ctxt ist (fromIvorName ist n) args sc)) lifted
@@ -136,9 +137,10 @@ that we avoid pattern matching where the programmer didn't ask us to.
 >      prel <- readLibFile defaultLibPath "Prelude.e"
 >      hPutStrLn eH prel
 >      mapM_ (hPutStrLn eH) outputs
+>      -- dumpNames scs
 >      mapM_ (writeDef eH erasure) scs
 >      hClose eH
->      let cmd = "epic -g " ++ efile ++ " -o " ++ ofile ++ " " ++
+>      let cmd = "epic " ++ efile ++ " -o " ++ ofile ++ " " ++
 >                concat (map (' ':) clink)
 >      exit <- system cmd
 >      -- removeFile efile
@@ -152,13 +154,20 @@ that we avoid pattern matching where the programmer didn't ask us to.
 > quotename ('.':cs) = "_NS_"++quotename cs
 > quotename (c:cs) = c:(quotename cs)
 
+> dumpNames [] = return ()
+> dumpNames (x:xs) = do putStr "Name: "
+>                       putStrLn ((\ (a, b, c) -> show a) x)
+>                       dumpNames xs
+
 > writeDef :: Handle -> Bool -> (Name, Bool, SCFun) -> IO ()
 > writeDef h erasure (n,gen,(SCFun scopts args def)) = do
+>   -- putStrLn $ "Writing " ++ show n
 >   when (gen || elem SCInline scopts) $ hPutStr h "%inline "
 >   when (elem SCStrict scopts) $ hPutStr h "%strict "
 >   maybe (return ()) (\ c -> hPutStrLn h ("export " ++ show c ++ " ")) (getEName scopts)
 >   hPutStrLn h (quotename (show n) ++ " (" ++ list args ++ ") -> Any = \n" ++
 >                writeSC n erasure def)
+>   -- putStrLn $ "Written " ++ show n
 >    where list [] = ""
 >          list [a] = quotename (show a) ++ " : Any"
 >          list (x:xs) = quotename (show x) ++ " : Any, " ++ list xs

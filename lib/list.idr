@@ -66,3 +66,10 @@ appNil_Cons proof {
 	%qed;
 };
 
+span' : (a -> Bool) -> List a -> List a -> (List a & List a);
+span' p Nil acc         = (rev acc, Nil);
+span' p (Cons x xs) acc = if (p x) then (span' p xs (Cons x acc))
+      	      	      	           else (rev acc, Cons x xs);
+
+span : (a -> Bool) -> List a -> (List a & List a);
+span p xs = span' p xs Nil;

@@ -9,24 +9,33 @@
 > import Debug.Trace
 
 > import Control.Monad
+> import Control.Monad.State
 > import List
 
 Work out how many implicit arguments we need, then translate our definition
 into an ivor definition, with all the necessary placeholders added.
 
+The definition may generate new definitions (e.g. metavariables with proofs
+attached).
+
 > makeIvorFun ::  Implicit -> UndoInfo -> UserOps ->
->                 Ctxt IvorFun -> Decl -> Function -> [CGFlag] -> IvorFun
+>                 Ctxt IvorFun -> Decl -> Function -> [CGFlag] -> 
+>                 (IvorFun, [Decl])
 
 > makeIvorFun using ui uo ctxt decl (Function n ty clauses file line) flags
 >     = let (rty, imp) = addImplWith using ctxt ty
 >           ity = makeIvorTerm using ui uo n ctxt rty
 >           extCtxt = addEntry ctxt (thisNamespace using) n (IvorFun Nothing (Just ity) 
 >                                       imp Nothing decl flags (map (+p) (getLazy ty)) (map (+p) (getStatic ty)))
->           pclauses = map (mkPat extCtxt imp) clauses in
->       IvorFun (Just (toIvorName (fullName using n))) 
+>           (clausesm, (_, newms)) 
+>                 = runState (insertMetasClauses n clauses) (0, [])
+>           pclauses = map (mkPat extCtxt imp) clausesm
+>           newdefs = reverse (map mkPrf newms) in
+>       (IvorFun (Just (toIvorName (fullName using n))) 
 >                   (Just (Annotation (FileLoc file line) ity)) imp 
 >                   (Just (PattDef (Patterns pclauses))) decl flags 
->                   (map (+p) (getLazy ty)) (map (+p) (getStatic ty))
+>                   (map (+p) (getLazy ty)) (map (+p) (getStatic ty)),
+>                   newdefs)
 >   where p = length (params using)
 >         mkPat ectx imp (id,(RawClause lhs rhs)) 
 >               = let lhs' = addPlaceholders ectx using uo lhs in
@@ -43,6 +52,7 @@ into an ivor definition, with all the necessary placeholders added.
 >                                vscr = makeIvorTerm using ui uo n ectx scr
 >                                vdef = Patterns $ map (mkPat ectx imp) (zip (repeat id) def) in
 >                                PWithClause prf vpats vscr vdef
+>         mkPrf (nm, tacs) = Prf (Proof nm Nothing tacs)
 
 > makeIvorFuns :: [Opt] -> Ctxt IvorFun -> 
 >                 [Decl] -> UserOps -> (Ctxt IvorFun, UserOps)
@@ -91,8 +101,8 @@ into an ivor definition, with all the necessary placeholders added.
 >                     in UI b bi r ri pfull pureImpl afull apImpl
 > mif opt ctxt acc using' ui uo (decl@(Fun f flags):ds) 
 >         = let using = addParamName using' (funId f)
->               fn = makeIvorFun using ui uo (appCtxt ctxt acc) decl f flags in
->               mif opt ctxt (addEntry acc (thisNamespace using) (funId f) fn) using ui uo ds
+>               (fn, newdefs) = makeIvorFun using ui uo (appCtxt ctxt acc) decl f flags in
+>               mif opt ctxt (addEntry acc (thisNamespace using) (funId f) fn) using ui uo (newdefs ++ ds)
 > mif opt ctxt acc using' ui uo (decl@(Fwd n ty flags):ds) 
 >      = let (file, line) = getFileLine ty
 >            using = addParamName using' n
@@ -240,7 +250,7 @@ n is a parameter
 >             = checkp pos n (getApps tm)
 >         checkp pos n [] = True
 >         checkp pos n (t:ts) 
->              | length t >= pos = nameMatch n (t!!pos) && checkp pos n ts
+>              | length t >= pos = nameMatch n (t!!!(pos,"checkp fail")) && checkp pos n ts
 >              | otherwise = False
 >         nameMatch n (Name _ nm) = n == nm
 >         nameMatch n (Annotation _ t) = nameMatch n t
@@ -325,15 +335,16 @@ except frozen things, which need to be added as we go, in order.
 >                  then trace ("Processing " ++ show n) def' else def' in
 >       case def of
 >         PattDef ps -> -- trace (show (ps, getSpec flags fr)) $
->                 do (ctxt, newdefs) <- addPatternDefSC ctxt name (unjust tyin) ps (getSpec flags fr)
+>                 do checkArgLengths (show n) ps
+>                    (ctxt, newdefs) <- addPatternDefSC ctxt name (unjust tyin) ps (getSpec flags fr) sts
 >                    -- Get the type checked version
 >                    (_, pdef) <- getPatternDef ctxt name
 >                    -- Generate some PE data from it
->                    let (_, nds, stu', newts, newfs) = getNewDefs n sts ist raw stu (PattDef pdef)
->                    (ctxt, uo, freeze) <- addPEdefs raw ctxt sts uo nds
->                    if (null newdefs) then return ((ctxt, metas), uo, stu')
+>                    -- let (_, nds, stu', newts, newfs) = getNewDefs n sts ist raw stu (PattDef pdef)
+>                    -- (ctxt, uo, freeze) <- addPEdefs raw ctxt sts uo nds
+>                    if (null newdefs) then return ((ctxt, metas), uo, stu)
 >                      else do r <- addMeta (Verbose `elem` opt) raw ctxt metas newdefs
->                              return (r, uo, stu')
+>                              return (r, uo, stu)
 >
 >         SimpleDef tm -> 
 >                         do tm' <- case (getSpec flags fr) of
@@ -385,4 +396,10 @@ except frozen things, which need to be added as we go, in order.
 >             | otherwise = Just $ (map (\ (x, i) -> (toIvorName x, i)) ns) ++
 >                              (map (\x -> (toIvorName x, 0)) fr)
 >          getSpec (_:ns) fr = getSpec ns fr
+
+> checkArgLengths :: String -> Patterns -> TTM ()
+> checkArgLengths n (Patterns cs) 
+>    = if (length (nub (map (length.arguments) cs)) <= 1)
+>         then return ()
+>         else ttfail $ "Differing numbers of arguments in clauses for " ++ n
 

@@ -1,4 +1,4 @@
-\documentclass{llncs}
+\documentclass{acmtrans2m}
 %\documentclass[orivec,dvips,10pt]{llncs}
 
 %\usepackage[draft]{comments}
@@ -37,42 +37,45 @@
 %\bibpunct();A{},
 %\let\cite=\citep
 
-\begin{document}
+%\acmVolume{V} 
+%\acmNumber{N} 
+%\acmYear{YY} 
+%\acmMonth{M} 
+\markboth{Edwin Brady}{\Idris{} --- Practical, efficient programming
+  with dependent types}
 
 \title{\Idris{} --- Practical, efficient programming with dependent types}
-\author{Edwin Brady}
-
-\institute{School of Computer Science, \\
- University of St Andrews, St Andrews, Scotland. \\ \texttt{Email: eb@cs.st-andrews.ac.uk}.\\
-\texttt{Tel: +44-1334-463253}, \texttt{Fax: +44-1334-463278} \vspace{0.1in}
-}
- 
-\maketitle
+\author{EDWIN BRADY\\ School of Computer Science, University of St Andrews}
 
 \begin{abstract}
 \Idris{} is a functional programming language providing 
 a platform for practical and efficient programming
 with dependent types. The paper is about it \ldots
-
-%mention: interactive development. programming techniques. compiling
-%via C, FFI, concurrency, application to Hume.
-
 \end{abstract}
 
+\category{D.3.2}{Programming Techniques}{Applicative (functional) Programming}
+\category{D.3.2}{Programming Languages}{Language
+  Classifications}[Applicative (functional) Languages]
+\category{D.3.4}{Programming Languages}{Processors}[Compilers]
+\terms{Languages, Verification}
+\keywords{Dependent Types, Functional Programming}
+ 
+\begin{document}
+
+\begin{bottomstuff}
+\end{bottomstuff}
+
+\maketitle
+
 \input{intro}
+
+\input{dtp}
 
 \input{conclusion}
 
 %\section*{Acknowledgements}
 
-% Local macros:
-
-\newcommand{\Pair}{\TC{Pair}}
-\newcommand{\MkPair}{\DC{MkPair}}
-
-\bibliographystyle{plain}
-\bibliographystyle{abbrv}
-%\begin{small}
+\bibliographystyle{acmtrans}
 \bibliography{literature.bib}
 
 %\appendix

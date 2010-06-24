@@ -1,6 +1,6 @@
 all: idris.pdf
 
-SOURCES = idris.tex literature.bib intro.tex conclusion.tex
+SOURCES = idris.tex literature.bib intro.tex conclusion.tex dtp.tex
 
 idris.pdf: ${SOURCES}
 #	dvipdf idris.dvi
