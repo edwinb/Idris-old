@@ -241,7 +241,7 @@ typechecked forms to disk.
 >     put (Fun a b) = do put (2 :: Word8); put a; put b
 >     put (TermDef a b c) = do put (3 :: Word8); put a; put b; put c
 >     put Constructor = put (4 :: Word8)
->     put (Prf d) = do put (5 :: Word8); put d
+>     put (Prf d f) = do put (5 :: Word8); put d; put f
 >     put (LatexDefs d) = do put (6 :: Word8); put d
 >     put (Using a b) = do put (7 :: Word8); put a; put b
 >     put (Params a b) = do put (8 :: Word8); put a; put b
@@ -260,7 +260,7 @@ typechecked forms to disk.
 >                2 -> liftM2 Fun get get
 >                3 -> liftM3 TermDef get get get
 >                4 -> return Constructor
->                5 -> liftM Prf get
+>                5 -> liftM2 Prf get get
 >                6 -> liftM LatexDefs get
 >                7 -> liftM2 Using get get
 >                8 -> liftM2 Params get get
@@ -362,7 +362,7 @@ typechecked forms to disk.
 >     put IDataCon = put (2 :: Word8)
 >     put (SimpleDef t) = do put (3 :: Word8); put t
 >     put (DataDef a b) = do put (4 :: Word8); put a; put b
->     put (IProof ts) = do put (5 :: Word8); put ts
+>     put (IProof ts f) = do put (5 :: Word8); put ts; put f
 >     put Later = put (6 :: Word8)
 >     put LataDef = put (7 :: Word8)
 
@@ -373,7 +373,7 @@ typechecked forms to disk.
 >                2 -> return IDataCon
 >                3 -> liftM SimpleDef get
 >                4 -> liftM2 DataDef get get
->                5 -> liftM IProof get
+>                5 -> liftM2 IProof get get
 >                6 -> return Later
 >                7 -> return LataDef
 

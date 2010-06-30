@@ -88,13 +88,21 @@
 > addPatternDefSC :: Context -> Name -> ViewTerm -> Patterns -> 
 >                    Maybe [(Name, Int)] -> Statics ->
 >                    TTM (Context, [(Name, ViewTerm)])
-> addPatternDefSC ctxt nm ty ps spec sts = do
+> addPatternDefSC ctxt nm ty ps specopts sts = do
 >     -- just allow general recursion for now
->     let opts = case spec of
->                  Nothing -> [Holey, Partial, GenRec]
->                  Just fns -> [Holey, Partial, GenRec, Specialise fns,
->                               SpecStatic (map mkss sts)]
+>     let opts = [Holey, Partial, GenRec]
+
+case specopts of
+                  Nothing -> [Holey, Partial, GenRec]
+                  Just fns -> trace ("Specialising " ++ show nm ++ " with " ++ show (map mkss sts)) $ 
+                              [Holey, Partial, GenRec], Specialise fns,
+                               SpecStatic (map mkss sts)]
+
 >     (ctxt', newdefs) <- addPatternDef ctxt nm ty ps opts
+>     ctxt' <- case specopts of
+>                Nothing -> return ctxt'
+>                Just fns -> trace ("Specialising " ++ show nm ++ " with " ++ show (map mkss sts)) $ 
+>                            spec ctxt' nm (map mkss sts) (map fst fns)
 >     (_, patts) <- getPatternDef ctxt' nm
 >     let (ps', ds) = liftCases nm patts
 >     if (null ds) then return (ctxt', newdefs)
@@ -104,7 +112,7 @@
 >          return (ctxt', newdefs++newdefs')
 >  where addAll ctxt [] nds = return (ctxt, nds)
 >        addAll ctxt ((n,ty,ps):rs) nds = do
->          (ctxt', newdefs') <- addPatternDefSC ctxt n ty ps spec sts
+>          (ctxt', newdefs') <- addPatternDefSC ctxt n ty ps specopts sts
 >          addAll ctxt' rs (newdefs'++nds) 
 >        mkss (n, (statics, arity, ty)) = (n, (statics, arity))
 

@@ -29,7 +29,7 @@
 > mkMarkup (n, Fun _ _) = (show n, FN)
 > mkMarkup (n, Fwd _ _ _) = (show n, FN)
 > mkMarkup (n, TermDef _ _ _) = (show n, FN)
-> mkMarkup (n, Prf _) = (show n, FN)
+> mkMarkup (n, Prf _ _) = (show n, FN)
 > mkMarkup (n, DataDecl _) = (show n, TC)
 > mkMarkup (n, Constructor) = (show n, DC)
 > mkMarkup (n, _) = (show n, VV)

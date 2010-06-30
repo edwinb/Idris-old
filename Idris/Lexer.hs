@@ -148,6 +148,7 @@ data Token
       | TokenBang
 -- Tactics
       | TokenProof
+      | TokenTryProof
       | TokenIntro
       | TokenRefine
       | TokenExists
@@ -271,6 +272,7 @@ lexVar cont cs =
    case span isAllowed cs of
 -- Keywords
       ("proof",rest) -> cont TokenProof rest
+      ("tryproof",rest) -> cont TokenTryProof rest
       ("data",rest) -> cont TokenDataType rest
       ("using",rest) -> cont TokenUsing rest
       ("idiom",rest) -> cont TokenIdiom rest

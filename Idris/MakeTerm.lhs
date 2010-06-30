@@ -53,7 +53,7 @@ attached).
 >                                vscr = makeIvorTerm using ui uo n ectx scr
 >                                vdef = Patterns $ map (mkPat ectx imp) (zip (repeat id) def) in
 >                                PWithClause prf vpats vscr vdef
->         mkPrf (nm, tacs) = Prf (Proof nm Nothing tacs)
+>         mkPrf (nm, tacs, failable) = Prf (Proof nm Nothing tacs) failable
 
 > makeIvorFuns :: [Opt] -> Ctxt IvorFun -> 
 >                 [Decl] -> UserOps -> (Ctxt IvorFun, UserOps)
@@ -158,16 +158,16 @@ frozen after they are needed.
 >     = mif opt ctxt (addEntry acc (thisNamespace using) (MN "freeze" (length ds))
 >                 (IvorFun Nothing Nothing 0 Nothing decl [] [] [])) using ui 
 >                 (UO fix trans fr syns) ds
-> mif opt ctxt acc using ui uo (decl@(Prf (Proof n _ scr)):ds) 
+> mif opt ctxt acc using ui uo (decl@(Prf (Proof n _ scr) failable):ds) 
 >     = case ctxtLookup acc (thisNamespace using) n of
 >          Left _ -> -- add the script and process the type later, should
 >                    -- be a metavariable
 >             mif opt ctxt (addEntry acc (thisNamespace using) n
->               (IvorFun (Just (toIvorName (fullName using n))) Nothing 0 (Just (IProof scr)) decl [] [] [])) 
+>               (IvorFun (Just (toIvorName (fullName using n))) Nothing 0 (Just (IProof scr failable)) decl [] [] [])) 
 >                  using ui uo ds
 >          Right (IvorFun _ (Just ty) imp _ _ _ _ _) -> 
 >             mif opt ctxt (addEntry acc (thisNamespace using) n
->               (IvorFun (Just (toIvorName (fullName using n))) (Just ty) imp (Just (IProof scr)) decl [] [] []))
+>               (IvorFun (Just (toIvorName (fullName using n))) (Just ty) imp (Just (IProof scr failable)) decl [] [] []))
 >                   using ui uo ds
 
 Just pass these on to epic to do the right thing
@@ -379,9 +379,20 @@ except frozen things, which need to be added as we go, in order.
 >                             return ((ctxt, metas), uo, stu)
 >                           -- addDataNoElim ctxt (mkParams d)
 >                           -- trace (show (mkParams d)) $ return c
->         IProof scr -> do ctxt <- runScript raw ctxt uo n scr
->                          return ((ctxt, filter (\ (x,y) -> x /= toIvorName n)
->                                         metas), uo, stu)
+>         IProof scr failable -> 
+>                do case runScript raw ctxt uo n scr of
+>                     Right ctxt -> do
+>                        return ((ctxt, filter (\ (x,y) -> x /= toIvorName n)
+>                                metas), uo, stu)
+
+If the proof doesn't work, but it was just a guess in a [tryproof ...] block,
+just silently discard it and leave it for the user to fill in later:
+
+>                     Left err -> let ctxt' = if (Verbose `elem` opt) then
+>                                             trace (show n ++ " proof failed") ctxt else ctxt in
+>                                 if failable 
+>                                     then return ((ctxt', metas), uo, stu)
+>                                     else Left err
 >         Later -> case tyin of
 >                    Just ty -> do ctxt <- declare ctxt name ty
 >                                  return ((ctxt, metas), uo, stu)

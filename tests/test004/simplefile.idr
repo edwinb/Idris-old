@@ -86,7 +86,7 @@ data AllClosed : (Vect FileState n) -> Set where
  | acCons : AllClosed ts -> AllClosed (Closed :: ts);
 
 getFile : {i:Fin n} -> (OpenH i p ts) -> (env:HEnv ts) -> File;
-getFile openFirst (Extend (OpenFile h) _) = h;
+getFile openFirst (Extend (OpenFile hfn) _) = hfn;
 getFile (openLater p) (Extend x env) = getFile p env;
 
 getPurpose : (i:Fin n) -> (Vect FileState n) -> Purpose;

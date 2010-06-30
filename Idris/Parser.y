@@ -120,6 +120,7 @@ import Debug.Trace
       let             { TokenLet }
       in              { TokenIn }
       proof           { TokenProof }
+      try             { TokenTryProof }
       intro           { TokenIntro }
       refine          { TokenRefine }
       generalise      { TokenGeneralise }
@@ -536,6 +537,7 @@ NoAppTerm : Name File Line { RVar $2 $3 $1 Unknown }
           | '~' NoAppTerm { RPure $2 }
           | metavar { RMetavar $1 }
           | '[' proof Tactics ']' { RMetavarPrf (UN "") $3 False }
+          | '[' try Tactics ']' { RMetavarPrf (UN "") $3 True }
           | '!' Name File Line { RExpVar $3 $4 $2 }
 --          | '{' TypedBind '}' arrow NoAppTerm
 --                { doBind (Pi Im) $2 $5 }

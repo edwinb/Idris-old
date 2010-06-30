@@ -39,7 +39,7 @@ We store everything directly as a 'ViewTerm' from Ivor.
 > data Decl = DataDecl Datatype | Fwd Id RawTerm [CGFlag]
 >           | PInclude FilePath
 >           | Fun Function [CGFlag] | TermDef Id RawTerm [CGFlag] | Constructor
->           | Prf Proof
+>           | Prf Proof Bool -- 'True' means proof is allowed to fail
 >           | LatexDefs [(Id,String)]
 >           | Using [(Id, RawTerm)] [Decl] -- default implicit args
 >           | Params [(Id, RawTerm)] [Decl] -- default implicit args
@@ -121,9 +121,9 @@ the system to insert a hole for a proof that turns it into the right type.
 >         cds rds fwds ((ProofScript n prf):ds)
 >             = case lookup n fwds of
 >                      Nothing ->
->                          cds ((Prf (Proof n Nothing prf)):rds) fwds ds
+>                          cds ((Prf (Proof n Nothing prf) False):rds) fwds ds
 >                      Just (ty, fl) -> 
->                          cds ((Prf (Proof n (Just ty) prf)):rds) fwds ds
+>                          cds ((Prf (Proof n (Just ty) prf) False):rds) fwds ds
 >         cds rds fwds ((PUsing uses pds):ds) = 
 >                case (cds [] [] pds) of
 >                   Success d ->
@@ -498,7 +498,7 @@ implicit arguments each function has.
 > getNameType i = case rawDecl i of
 >                   Fun _ _ -> Free
 >                   TermDef _ _ _ -> Free
->                   Prf _ -> Free
+>                   Prf _ _ -> Free
 >                   Fwd _ _ _ -> Free
 >                   Constructor -> DataCon
 >                   _ -> Unknown
@@ -538,7 +538,7 @@ Name definitions Ivor-side.
 >              | IDataCon -- Data constructor
 >              | SimpleDef !ViewTerm -- simple function definition
 >              | DataDef !Inductive Bool -- data type definition, generate elim
->              | IProof [ITactic]
+>              | IProof [ITactic] Bool -- True if failable
 >              | Later -- forward declaration
 >              | LataDef -- forward declared data
 >    deriving Show
@@ -778,12 +778,12 @@ programmer doesn't have to write them down inside the param block.
 Give names to unnamed metavariables, and record any associated proof
 scripts
 
-> insertMetas :: Id -> RawTerm -> State (Int, [(Id, [ITactic])]) RawTerm
+> insertMetas :: Id -> RawTerm -> State (Int, [(Id, [ITactic], Bool)]) RawTerm
 > insertMetas fname tm = im tm
 >     where im (RMetavarPrf (UN "") tacs prf)
 >                 = do (h, ts) <- get
 >                      let nm = mkName fname h
->                      put (h+1, (nm, tacs):ts)
+>                      put (h+1, (nm, tacs, prf):ts)
 >                      return $ RMetavar nm
 >           im (RApp f l x a) 
 >               = do x' <- im x
@@ -838,7 +838,7 @@ scripts
 
 
 > insertMetasClauses :: Id -> [(Id, RawClause)] -> 
->                       State (Int, [(Id, [ITactic])]) [(Id, RawClause)]
+>                       State (Int, [(Id, [ITactic], Bool)]) [(Id, RawClause)]
 > insertMetasClauses fn xs = mapM imcp xs where
 >     imcp (n, t) = do t' <- imc t
 >                      return (n, t')
