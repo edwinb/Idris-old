@@ -26,8 +26,8 @@ do using (BIND, RETURN) {
                 fh2 <- OPEN Writing outfile;
                 str <- GETLINE fO openFirst;
                 PUTLINE (fS fO) str (openLater openFirst); 
-                CLOSE (fS fO) ?;
-                CLOSE (fO) ?;
+                CLOSE (handle fh2) ?;
+                CLOSE (handle fh1) ?;
               };
 }
 

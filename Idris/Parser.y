@@ -88,6 +88,7 @@ import Debug.Trace
       type            { TokenType }
       lazybracket     { TokenLazyBracket }
       data            { TokenDataType }
+      codata          { TokenCoDataType }
       infix           { TokenInfix }
       infixl          { TokenInfixL }
       infixr          { TokenInfixR }
@@ -313,8 +314,12 @@ ArgTerms : { [] }
       | brackname '=' Term '}' ArgTerms { ($3, Just $1):$5 }
 
 Datatype :: { Datatype }
-Datatype : data DataOpts Name DefinedData File Line
-             { mkDatatype $5 $6 $3 $4 $2 }
+Datatype : Data DataOpts Name DefinedData File Line
+             { mkDatatype $1 $5 $6 $3 $4 $2 }
+
+Data :: { Bool }
+Data : data { False }
+     | codata { True }
 
 DefinedData :: { Either RawTerm ((RawTerm, [(Id, RawTerm)]), [ConParse]) }
 DefinedData : DType Constructors ';' { Right ($1,$2) }
@@ -750,11 +755,21 @@ parseTerm s = mkparseTerm s "(input)" 0 []
 parseTactic :: String -> Result ITactic
 parseTactic s = mkparseTactic s "(tactic)" 0 []
 
-mkCon :: RawTerm -> ConParse -> (Id,RawTerm)
-mkCon _ (Full n t) = (n,t)
-mkCon ty (Simple n args) = (n, mkConTy args ty)
+-- Make a constructor type, and make arguments lazy if it's codata
+
+mkCon :: Bool -> RawTerm -> ConParse -> (Id,RawTerm)
+mkCon co _ (Full n t) = (n,if co then lazify t else t)
+mkCon co ty (Simple n args) = (n, mkConTy args ty)
    where mkConTy [] ty = ty
-         mkConTy (a:as) ty = RBind (MN "X" 0) (Pi Ex [] a) (mkConTy as ty)
+         mkConTy (a:as) ty = let opts = if co then [Lazy] else [] in
+                                 RBind (MN "X" 0) (Pi Ex opts a) (mkConTy as ty)
+
+-- Make sure all arguments are lazy
+
+lazify :: RawTerm -> RawTerm
+lazify (RBind n (Pi p opts a) sc) 
+    = RBind n (Pi p (nub (Lazy:opts)) a) (lazify sc)
+lazify t = t
 
 mkDef file line (n, tms) = mkImpApp (RVar file line n Unknown) tms
    where mkImpApp f [] = f
@@ -778,12 +793,13 @@ mkTyParams :: String -> Int -> [Id] -> RawTerm
 mkTyParams f l [] = RConst f l TYPE
 mkTyParams f l (x:xs) = RBind x (Pi Ex [] (RConst f l TYPE)) (mkTyParams f l xs)
 
-mkDatatype :: String -> Int ->
+mkDatatype :: Bool -> String -> Int ->
               Id -> Either RawTerm ((RawTerm, [(Id, RawTerm)]), [ConParse]) -> 
                     [TyOpt] -> Datatype
-mkDatatype file line n (Right ((t, using), cons)) opts
-    = Datatype n t (map (mkCon (mkTyApp file line n t)) cons) using opts file line 
-mkDatatype file line n (Left t) opts
+mkDatatype co file line n (Right ((t, using), cons)) opts
+    = let opts' = if co then nub (Codata:opts) else opts in
+          Datatype n t (map (mkCon co (mkTyApp file line n t)) cons) using opts' file line 
+mkDatatype co file line n (Left t) opts
     = Latatype n t file line
 
 bracket (RUserInfix f l _ op x y) = RUserInfix f l True op x y

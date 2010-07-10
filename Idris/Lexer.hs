@@ -69,6 +69,7 @@ data Token
       | TokenLockType
       | TokenPtrType
       | TokenDataType
+      | TokenCoDataType
       | TokenInfix
       | TokenInfixL
       | TokenInfixR
@@ -274,6 +275,7 @@ lexVar cont cs =
       ("proof",rest) -> cont TokenProof rest
       ("tryproof",rest) -> cont TokenTryProof rest
       ("data",rest) -> cont TokenDataType rest
+      ("codata",rest) -> cont TokenCoDataType rest
       ("using",rest) -> cont TokenUsing rest
       ("idiom",rest) -> cont TokenIdiom rest
       ("params",rest) -> cont TokenParams rest

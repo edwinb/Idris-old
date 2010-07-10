@@ -208,7 +208,7 @@ the system to insert a hole for a proof that turns it into the right type.
 >                          } -- forward declaration
 >   deriving Show
 
-> data TyOpt = NoElim | Collapsible
+> data TyOpt = NoElim | Collapsible | Codata
 >   deriving (Show, Eq, Enum)
 
 > tyHasElim dt = not (elem NoElim (tyOpts dt))
