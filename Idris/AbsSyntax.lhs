@@ -392,13 +392,16 @@ Operators, more precisely, are built-in functions on primitive types which both 
 typechecker and compiler need to know how to run. First we have the usual set of infix 
 operators (plus John Major equality):
 
-> data Op = Plus  | Minus | Times | Divide | Concat | JMEq
->         | OpEq  | OpLT  | OpLEq | OpGT   | OpGEq  | OpOr 
->         | OpAnd | ShL   | ShR
+> data Op = Plus  | Minus  | Times  | Divide | Concat | JMEq
+>         | FPlus | FMinus | FTimes | FDivide
+>         | OpEq  | OpLT   | OpLEq  | OpGT   | OpGEq  
+>         | OpFEq | OpFLT  | OpFLEq | OpFGT  | OpFGEq 
+>         | OpOr  | OpAnd | ShL    | ShR
 
 Then built-in functions for coercing between types
 
->         | ToString | ToInt
+>         | ToString | ToInt 
+>         | FloatToString | StringToFloat
 >         | IntToChar | CharToInt
 
 Finally some primitive operations on primitive types.
@@ -408,14 +411,19 @@ Finally some primitive operations on primitive types.
 >         | StringFind | StringSub
 >    deriving (Eq, Enum)
 
-> allOps = [Plus,Minus,Times,Divide,Concat,ShL,ShR,
->           JMEq,OpEq,OpLT,OpLEq,OpGT,OpGEq]
+> allOps = [Plus,Minus,Times,Divide,FPlus,FMinus,FTimes,FDivide,
+>           Concat,ShL,ShR,JMEq,OpEq,OpLT,OpLEq,OpGT,OpGEq,
+>           OpFEq,OpFLT,OpFLEq,OpFGT,OpFGEq]
 
 > instance Show Op where
 >     show Plus = "+"
 >     show Minus = "-"
 >     show Times = "*"
 >     show Divide = "/"
+>     show FPlus = "+."
+>     show FMinus = "-."
+>     show FTimes = "*."
+>     show FDivide = "/."
 >     show Concat = "++"
 >     show JMEq = "="
 >     show OpEq = "=="
@@ -423,6 +431,11 @@ Finally some primitive operations on primitive types.
 >     show OpLEq = "<="
 >     show OpGT = ">"
 >     show OpGEq = ">="
+>     show OpFEq = "==."
+>     show OpFLT = "<."
+>     show OpFLEq = "<=."
+>     show OpFGT = ">."
+>     show OpFGEq = ">=."
 >     show OpOr = "||"
 >     show OpAnd = "&&"
 >     show ShL = "<<"
@@ -432,6 +445,10 @@ Finally some primitive operations on primitive types.
 > opFn Minus = (name "__subInt")
 > opFn Times = (name "__mulInt")
 > opFn Divide = (name "__divInt")
+> opFn FPlus = (name "__addFloat")
+> opFn FMinus = (name "__subFloat")
+> opFn FTimes = (name "__mulFloat")
+> opFn FDivide = (name "__divFloat")
 > opFn Concat = (name "__concat")
 > opFn JMEq = (name "Eq")
 > opFn OpEq = (name "__eq")
@@ -439,6 +456,11 @@ Finally some primitive operations on primitive types.
 > opFn OpLEq = (name "__intleq")
 > opFn OpGT = (name "__intgt")
 > opFn OpGEq = (name "__intgeq")
+> opFn OpFEq = (name "__feq")
+> opFn OpFLT = (name "__floatlt")
+> opFn OpFLEq = (name "__floatleq")
+> opFn OpFGT = (name "__floatgt")
+> opFn OpFGEq = (name "__floatgeq")
 > opFn OpOr = (name "__or")
 > opFn OpAnd = (name "__and")
 > opFn ShL = (name "__shl")
@@ -446,6 +468,8 @@ Finally some primitive operations on primitive types.
 
 > opFn ToInt = (name "__toInt")
 > opFn ToString = (name "__toString")
+> opFn StringToFloat = (name "__stringToFloat")
+> opFn FloatToString = (name "__floatToString")
 > opFn CharToInt = (name "__charToInt")
 > opFn IntToChar = (name "__intToChar")
 

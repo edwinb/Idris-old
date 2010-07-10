@@ -75,6 +75,12 @@ __epic_toInt (x:String) -> Int =
 __epic_toString (x:Int) -> String = 
    foreign String "intToStr" (x:Int)
 
+__epic_floatToString (x:Float) -> String = 
+   foreign String "floatToStr" (x:Float)
+
+__epic_stringToFloat (x:String) -> Float = 
+   foreign Float "strToFloat" (x:String)
+
 __epic_native (x:Fun) -> Ptr =
    foreign Ptr "getNative" (x:Fun)
 

@@ -203,6 +203,10 @@ TMP HACK until we do coercions on primitives properly
 >         "__epic_toInt(" ++ writeSC' arg ++ ")"
 >     | n == name "__toString" =
 >         "__epic_toString(" ++ writeSC' arg ++ ")"
+>     | n == name "__floatToString" =
+>         "__epic_floatToString(" ++ writeSC' arg ++ ")"
+>     | n == name "__stringToFloat" =
+>         "__epic_stringToFloat(" ++ writeSC' arg ++ ")"
 >     | n == name "__charToInt" =
 >         writeSC' arg
 >     | n == name "__intToChar" =

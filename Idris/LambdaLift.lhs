@@ -256,10 +256,13 @@ Chars are just treated as Ints by the compiler, so convert here.
 >        sc' (Constant c) [] 
 >            = case (cast c)::Maybe Int of
 >                 Just i -> SConst (Num i)
->                 Nothing -> case (cast c)::Maybe String of
->                                Just s -> SConst (Str s)
->                                Nothing -> case (cast c)::Maybe Char of
->                                             Just c -> SConst (Num (fromEnum c))
+>                 Nothing -> 
+>                    case (cast c)::Maybe String of
+>                           Just s -> SConst (Str s)
+>                           Nothing -> case (cast c)::Maybe Char of
+>                                        Just c -> SConst (Num (fromEnum c))
+>                                        Nothing -> case (cast c)::Maybe Double of
+>                                                     Just c -> SConst (Fl c)
 >        sc' (Annotation _ x) args = sc' x args
 >        sc' x args = SUnit -- no runtime meaning
 

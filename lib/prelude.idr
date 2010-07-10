@@ -1,11 +1,13 @@
 flip : (a -> b -> c) -> b -> a -> c;
 flip f x y = f y x;
 
-infixl 5 ==, /=;
-infixl 6 <, <=, >, >=;
+infixl 5 ==, /=, ==.;
+infixl 6 <, <=, >, >=, <., <=., >., >=.;
 infixl 7 <<, >>;
-infixl 8 +,-,++;
-infixl 9 *,/;
+infixl 8 +,-,++,+.,-.;
+infixl 9 *,/,*.,/.;
+
+-- Integer primitives
 
 (+) : Int -> Int -> Int; [inline]
 (+) x y = __addInt x y;
@@ -31,9 +33,6 @@ infixl 9 *,/;
 (>=) : Int -> Int -> Bool; [inline]
 (>=) x y = __intgeq x y;
 
-(++) : String -> String -> String; [inline]
-(++) x y = __concat x y;
-
 (==) : Int -> Int -> Bool; [inline]
 (==) x y = __eq x y;
 
@@ -45,7 +44,42 @@ infixl 9 *,/;
 
 (>>) : Int -> Int -> Int; [inline]
 (>>) x y = __shr x y;
- 
+
+-- Floating point primitives
+
+(+.) : Float -> Float -> Float; [inline]
+(+.) x y = __addFloat x y;
+
+(-.) : Float -> Float -> Float; [inline]
+(-.) x y = __subFloat x y;
+
+(*.) : Float -> Float -> Float; [inline]
+(*.) x y = __mulFloat x y;
+
+(/.) : Float -> Float -> Float; [inline]
+(/.) x y = __divFloat x y;
+
+(<.) : Float -> Float -> Bool; [inline]
+(<.) x y = __floatlt x y;
+
+(<=.) : Float -> Float -> Bool; [inline]
+(<=.) x y = __floatleq x y;
+
+(>.) : Float -> Float -> Bool; [inline]
+(>.) x y = __floatgt x y;
+
+(>=.) : Float -> Float -> Bool; [inline]
+(>=.) x y = __floatgeq x y;
+
+(==.) : Float -> Float -> Bool; [inline]
+(==.) x y = __feq x y;
+
+-- String primitives
+
+(++) : String -> String -> String; [inline]
+(++) x y = __concat x y;
+
+
 -- Function composition
 
 infixl 9 .;

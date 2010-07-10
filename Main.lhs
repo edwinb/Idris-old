@@ -450,6 +450,13 @@ the appropriate thing, after applying the relevant transformations.
 >                                "Int->Int->Int"
 >              c <- addBinOp c (opFn Divide) (div::Int->Int->Int)
 >                                "Int->Int->Int"
+>              c <- addBinOp c (opFn FPlus) ((+)::Double->Double->Double) "Float->Float->Float"
+>              c <- addBinOp c (opFn FMinus) ((-)::Double->Double->Double)
+>                                "Float->Float->Float"
+>              c <- addBinOp c (opFn FTimes) ((*)::Double->Double->Double)
+>                                "Float->Float->Float"
+>              c <- addBinOp c (opFn FDivide) ((/)::Double->Double->Double)
+>                                "Float->Float->Float"
 >              c <- addBinOp c (opFn Concat) ((++)::String->String->String)
 >                                "String->String->String"
 >              c <- addBinOp c (opFn StringGetIndex) 
@@ -465,8 +472,17 @@ the appropriate thing, after applying the relevant transformations.
 >              c <- addExternalFn c (opFn OpLEq) 2 intle "Int->Int->Bool"
 >              c <- addExternalFn c (opFn OpGT) 2 intgt "Int->Int->Bool"
 >              c <- addExternalFn c (opFn OpGEq) 2 intge "Int->Int->Bool"
+
+>              c <- addExternalFn c (opFn OpFEq) 2 constEq "Float->Float->Bool"
+>              c <- addExternalFn c (opFn OpFLT) 2 floatlt "Float->Float->Bool"
+>              c <- addExternalFn c (opFn OpFLEq) 2 floatle "Float->Float->Bool"
+>              c <- addExternalFn c (opFn OpFGT) 2 floatgt "Float->Float->Bool"
+>              c <- addExternalFn c (opFn OpFGEq) 2 floatge "Float->Float->Bool"
+
+>              c <- addExternalFn c (opFn FloatToString) 1 floatToString "Float->String"
 >              c <- addExternalFn c (opFn ToString) 1 intToString "Int->String"
 >              c <- addExternalFn c (opFn ToInt) 1 stringToInt "String->Int"
+>              c <- addExternalFn c (opFn StringToFloat) 1 stringToFloat "String->Float"
 >              c <- addExternalFn c (opFn IntToChar) 1 intToChar "Int->Char"
 >              c <- addExternalFn c (opFn CharToInt) 1 charToInt "Char->Int"
 >              c <- addExternalFn c (opFn StringLength) 1 stringLen "String->Int"
@@ -546,6 +562,42 @@ the appropriate thing, after applying the relevant transformations.
 >           _ -> Just $ Name DataCon (name "False")
 > intge _ = Nothing
 
+> floatlt :: [ViewTerm] -> Maybe ViewTerm
+> floatlt [Constant x, Constant y]
+>       = case (cast x, cast y) of
+>           (Just x', Just y') -> if (x'<(y'::Double))
+>                            then Just $ Name DataCon (name "True")
+>                            else Just $ Name DataCon (name "False")
+>           _ -> Just $ Name DataCon (name "False")
+> floatlt _ = Nothing
+
+> floatle :: [ViewTerm] -> Maybe ViewTerm
+> floatle [Constant x, Constant y]
+>       = case (cast x, cast y) of
+>           (Just x', Just y') -> if (x'<=(y'::Double))
+>                        then Just $ Name DataCon (name "True")
+>                        else Just $ Name DataCon (name "False")
+>           _ -> Just $ Name DataCon (name "False")
+> floatle _ = Nothing
+
+> floatgt :: [ViewTerm] -> Maybe ViewTerm
+> floatgt [Constant x, Constant y]
+>       = case (cast x, cast y) of
+>           (Just x', Just y') -> if (x'>(y'::Double))
+>                        then Just $ Name DataCon (name "True")
+>                        else Just $ Name DataCon (name "False")
+>           _ -> Just $ Name DataCon (name "False")
+> floatgt _ = Nothing
+
+> floatge :: [ViewTerm] -> Maybe ViewTerm
+> floatge [Constant x, Constant y]
+>       = case (cast x, cast y) of
+>           (Just x', Just y') -> if (x'>=(y'::Double))
+>                        then Just $ Name DataCon (name "True")
+>                        else Just $ Name DataCon (name "False")
+>           _ -> Just $ Name DataCon (name "False")
+> floatge _ = Nothing
+
 > intToString :: [ViewTerm] -> Maybe ViewTerm
 > intToString [Constant x]
 >             = case cast x of
@@ -554,6 +606,15 @@ the appropriate thing, after applying the relevant transformations.
 >    where iToS :: Int -> String
 >          iToS x = show x
 > intToString _ = Nothing
+
+> floatToString :: [ViewTerm] -> Maybe ViewTerm
+> floatToString [Constant x]
+>             = case cast x of
+>                 (Just s) -> Just (Constant (fToS s))
+>                 _ -> Nothing
+>    where fToS :: Double -> String
+>          fToS x = show x
+> floatToString _ = Nothing
 
 > stringToInt :: [ViewTerm] -> Maybe ViewTerm
 > stringToInt [Constant x]
@@ -565,6 +626,16 @@ the appropriate thing, after applying the relevant transformations.
 >           sToI s | all isDigit s = read s
 >                  | otherwise = 0
 > stringToInt _ = Nothing
+
+> stringToFloat :: [ViewTerm] -> Maybe ViewTerm
+> stringToFloat [Constant x]
+>             = case cast x of
+>                 (Just s) -> Just (Constant (sToF s))
+>                 _ -> Nothing
+>     where sToF :: String -> Int
+>           sToF ('-':s) = -(read s)
+>           sToF s = read s
+> stringToFloat _ = Nothing
 
 > intToChar :: [ViewTerm] -> Maybe ViewTerm
 > intToChar [Constant x] = case cast x :: Maybe Int of
