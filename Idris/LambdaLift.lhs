@@ -116,9 +116,9 @@ name, arguments, body
 >          liftAlt env (Alt c i args sc) = do sc' <- liftSC (env++args) sc
 >                                             return (Alt c i args sc')
 >          liftAlt env (ConstAlt c sc) = do sc' <- liftSC env sc
->                                           return (ConstAlt c sc)
+>                                           return (ConstAlt c sc')
 >          liftAlt env (Default sc) = do sc' <- liftSC env sc
->                                        return (Default sc)
+>                                        return (Default sc')
 
 First argument says whether to eta expand
 
@@ -130,6 +130,8 @@ First argument says whether to eta expand
 >          lift env (Let n ty val sc) = do val' <- lift env val
 >                                          sc' <- lift (n:env) sc
 >                                          return (Let n ty val' sc')
+>          lift env (Annotation a t) = do t' <- lift env t
+>                                         return (Annotation a t')
 >          -- and that's all the nested terms we care about
 >          lift env x = return x
 
@@ -264,6 +266,7 @@ Chars are just treated as Ints by the compiler, so convert here.
 >                                        Nothing -> case (cast c)::Maybe Double of
 >                                                     Just c -> SConst (Fl c)
 >        sc' (Annotation _ x) args = sc' x args
+>        sc' Placeholder args = SUnit
 >        sc' x args = SUnit -- no runtime meaning
 
 scapply deals with special cases for infix operators, IO, etc.
