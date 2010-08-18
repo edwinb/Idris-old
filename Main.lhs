@@ -510,7 +510,7 @@ the appropriate thing, after applying the relevant transformations.
 >           Just x' -> if (x'==y)
 >                        then Just $ Name DataCon (name "True")
 >                        else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing
 > constEq _ = Nothing
 
 > constLT :: [ViewTerm] -> Maybe ViewTerm
@@ -519,7 +519,7 @@ the appropriate thing, after applying the relevant transformations.
 >           (Just x', Just y') -> if (x'<y')
 >                        then Just $ Name DataCon (name "True")
 >                        else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing -- Just $ Name DataCon (name "False")
 
  constEq [_, x, y] = if (x == y) then Just $ Name DataCon (name "True")
                         else Just $ Name DataCon (name "False")
@@ -532,7 +532,7 @@ the appropriate thing, after applying the relevant transformations.
 >           (Just x', Just y') -> if (x'<(y'::Int))
 >                            then Just $ Name DataCon (name "True")
 >                            else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing
 > intlt _ = Nothing
 
 > intle :: [ViewTerm] -> Maybe ViewTerm
@@ -541,7 +541,7 @@ the appropriate thing, after applying the relevant transformations.
 >           (Just x', Just y') -> if (x'<=(y'::Int))
 >                        then Just $ Name DataCon (name "True")
 >                        else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing
 > intle _ = Nothing
 
 > intgt :: [ViewTerm] -> Maybe ViewTerm
@@ -550,7 +550,7 @@ the appropriate thing, after applying the relevant transformations.
 >           (Just x', Just y') -> if (x'>(y'::Int))
 >                        then Just $ Name DataCon (name "True")
 >                        else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing
 > intgt _ = Nothing
 
 > intge :: [ViewTerm] -> Maybe ViewTerm
@@ -559,7 +559,7 @@ the appropriate thing, after applying the relevant transformations.
 >           (Just x', Just y') -> if (x'>=(y'::Int))
 >                        then Just $ Name DataCon (name "True")
 >                        else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing
 > intge _ = Nothing
 
 > floatlt :: [ViewTerm] -> Maybe ViewTerm
@@ -568,7 +568,7 @@ the appropriate thing, after applying the relevant transformations.
 >           (Just x', Just y') -> if (x'<(y'::Double))
 >                            then Just $ Name DataCon (name "True")
 >                            else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing
 > floatlt _ = Nothing
 
 > floatle :: [ViewTerm] -> Maybe ViewTerm
@@ -577,7 +577,7 @@ the appropriate thing, after applying the relevant transformations.
 >           (Just x', Just y') -> if (x'<=(y'::Double))
 >                        then Just $ Name DataCon (name "True")
 >                        else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing
 > floatle _ = Nothing
 
 > floatgt :: [ViewTerm] -> Maybe ViewTerm
@@ -586,7 +586,7 @@ the appropriate thing, after applying the relevant transformations.
 >           (Just x', Just y') -> if (x'>(y'::Double))
 >                        then Just $ Name DataCon (name "True")
 >                        else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing
 > floatgt _ = Nothing
 
 > floatge :: [ViewTerm] -> Maybe ViewTerm
@@ -595,7 +595,7 @@ the appropriate thing, after applying the relevant transformations.
 >           (Just x', Just y') -> if (x'>=(y'::Double))
 >                        then Just $ Name DataCon (name "True")
 >                        else Just $ Name DataCon (name "False")
->           _ -> Just $ Name DataCon (name "False")
+>           _ -> Nothing
 > floatge _ = Nothing
 
 > intToString :: [ViewTerm] -> Maybe ViewTerm
