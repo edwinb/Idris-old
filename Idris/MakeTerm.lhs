@@ -165,9 +165,9 @@ frozen after they are needed.
 >             mif opt ctxt (addEntry acc (thisNamespace using) n
 >               (IvorFun (Just (toIvorName (fullName using n))) Nothing 0 (Just (IProof scr failable)) decl [] [] [])) 
 >                  using ui uo ds
->          Right (IvorFun _ (Just ty) imp _ _ _ _ _) -> 
+>          Right (IvorFun _ ty imp _ _ _ _ _) -> 
 >             mif opt ctxt (addEntry acc (thisNamespace using) n
->               (IvorFun (Just (toIvorName (fullName using n))) (Just ty) imp (Just (IProof scr failable)) decl [] [] []))
+>               (IvorFun (Just (toIvorName (fullName using n))) ty imp (Just (IProof scr failable)) decl [] [] []))
 >                   using ui uo ds
 
 Just pass these on to epic to do the right thing
@@ -368,7 +368,7 @@ except frozen things, which need to be added as we go, in order.
 >         LataDef -> case tyin of
 >                       Just ty -> do ctxt <- declareData ctxt name ty
 >                                     return ((ctxt, metas), uo, stu)
->         DataDef ind e -> -- trace (show ind) $
+>         DataDef ind e -> -- trace (show (ind, e)) $
 >                          do c <- addDataNoElim ctxt ind
 >                           -- add once to fill in placeholders
 >                             ctxt <- if e then do

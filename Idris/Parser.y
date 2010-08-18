@@ -134,6 +134,7 @@ import Debug.Trace
       induction       { TokenInduction }
       fill            { TokenFill }
       trivial         { TokenTrivial }
+      simplesearch    { TokenSimpleSearch }
       mktac           { TokenMkTac }
       believe         { TokenBelieve }
       use             { TokenUse }
@@ -677,6 +678,7 @@ Tactic : intro Names { Intro $2 }
        | induction Term { Induction $2 }
        | fill Term { Fill $2 }
        | trivial { Trivial }
+       | simplesearch { SimpleSearch }
        | mktac Term { RunTactic $2 }
        | believe Term { Believe $2 }
        | use Term { Use $2 }

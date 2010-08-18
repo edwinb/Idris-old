@@ -281,6 +281,7 @@ Raw terms, as written by the programmer with no implicit arguments added.
 >              | Induction RawTerm
 >              | Fill RawTerm
 >              | Trivial
+>              | SimpleSearch
 >              | Case RawTerm
 >              | Rewrite Bool Bool RawTerm
 >              | Unfold Id
