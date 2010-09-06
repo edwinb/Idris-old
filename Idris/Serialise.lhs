@@ -14,6 +14,8 @@ typechecked forms to disk.
 > import Data.Typeable
 > import Control.Monad
 
+> import Debug.Trace
+
 > instance Binary ViewTerm where
 >     put (Name t x) = do put (0 :: Word8)
 >                         put t; put x
@@ -37,7 +39,13 @@ typechecked forms to disk.
 >                          Nothing -> case cast c :: Maybe Int of
 >                            Just v -> do put (10 :: Word8)
 >                                         put v
->                            Nothing -> fail "Unknown constant type"
+>                            Nothing -> case cast c :: Maybe Double of
+>                               Just v -> do put (11 :: Word8)
+>                                            put v
+>                               Nothing -> case cast c :: Maybe Char of
+>                                 Just v -> do put (12 :: Word8)
+>                                              put v
+>                                 Nothing -> fail "Unknown constant type"
 
 >     get = do tag <- getWord8
 >              case tag of
@@ -54,6 +62,10 @@ typechecked forms to disk.
 >                        return (Constant (s :: String))
 >                10 -> do i <- get
 >                         return (Constant (i :: Int))
+>                11 -> do d <- get
+>                         return (Constant (d :: Double))
+>                12 -> do d <- get
+>                         return (Constant (d :: Char))
 
 
 > instance Binary RBinder where
@@ -216,9 +228,9 @@ typechecked forms to disk.
 
 > instance Binary IvorFun where
 >     put (IvorFun a b c d e f g h) = 
->         do put a; put b; put c; put d; put e; put f; put g; put h
->     get = do a <- get; b <- get; c <- get; d <- get; e <- get; f <- get; g <- get; h <- get
->              return (IvorFun a b c d e f g h)
+>         do trace ("Put " ++ show (a, d)) $ put a; put b; put c; put d; put e; put f; put g; put h
+>     get = do a <- get; b <- trace (show a) $ get; c <- get; d <- get; e <- get; f <- get; g <- get; h <- get
+>              trace ("Got " ++ show (a, d)) $ return (IvorFun a b c d e f g h)
 
 > instance Binary CGFlag where
 >     put NoCG = put (0 :: Word8)
@@ -252,6 +264,9 @@ typechecked forms to disk.
 >     put (Fixity a b c) = do put (13 :: Word8); put a; put b; put c
 >     put (Transform a b) = do put (14 :: Word8); put a; put b
 >     put (Freeze a b c d) = do put (15 :: Word8); put a; put b; put c; put d
+>     put (SynDef a b c) = do put (16 :: Word8); put a; put b; put c
+>     put (PInclude a) = do put (17 :: Word8); put a
+>     put (Namespace a b) = do put (18 :: Word8); put a; put b
 
 >     get = do tag <- getWord8
 >              case tag of
@@ -271,6 +286,9 @@ typechecked forms to disk.
 >                13 -> liftM3 Fixity get get get
 >                14 -> liftM2 Transform get get
 >                15 -> liftM4 Freeze get get get get
+>                16 -> liftM3 SynDef get get get
+>                17 -> liftM PInclude get
+>                18 -> liftM2 Namespace get get
 
 > instance Binary Datatype where
 >     put (Datatype a b c d e f g) = do put (0 :: Word8)
@@ -295,7 +313,7 @@ typechecked forms to disk.
 
 > instance Binary RawClause where
 >     put (RawClause a b) = do put (0 :: Word8); put a; put b
->     put (RawWithClause a b c d) = do put (0 :: Word8); put a; put b; put c; put d
+>     put (RawWithClause a b c d) = do put (1 :: Word8); put a; put b; put c; put d
 >     get = do tag <- getWord8
 >              case tag of
 >                0 -> liftM2 RawClause get get
@@ -307,7 +325,7 @@ typechecked forms to disk.
 
 > instance Binary PClause where
 >     put (PClause a b c) = do put (0 :: Word8); put a; put b; put c
->     put (PWithClause a b c d) = do put (0 :: Word8); put a; put b; put c; put d
+>     put (PWithClause a b c d) = do put (1 :: Word8); put a; put b; put c; put d
 >     get = do tag <- getWord8
 >              case tag of
 >                0 -> liftM3 PClause get get get

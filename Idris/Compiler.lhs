@@ -225,6 +225,12 @@ HACK for explicit laziness, and marking effectfullness
 >     | effect == name "__effect" =
 >         "%effect(" ++ writeSC' v ++ ")"
 
+Manual allocation
+
+>   writeSC' (SApp (SVar malloc) [_,b,v])
+>     | malloc == name "malloc" =
+>         "%memory(" ++ writeSC' b ++ "," ++ writeSC' v ++ ")"
+
 Epic has if/then/else, so just use that
 
 >   writeSC' (SApp (SVar ite) [_,v,SLazy t,SLazy e])
