@@ -1,3 +1,9 @@
+-- malloc evaluates an expression using a manual allocator, allocating 'bytes'
+-- Needs to be compiled specially, naturally.
+
+malloc : Int -> a -> a;
+malloc bytes val = val;
+
 flip : (a -> b -> c) -> b -> a -> c;
 flip f x y = f y x;
 
@@ -100,3 +106,4 @@ include "either.idr";
 include "tactics.idr";
 include "vect.idr";
 include "string.idr";
+
