@@ -4,6 +4,8 @@
 malloc : Int -> a -> a;
 malloc bytes val = val;
 
+%freeze malloc;
+
 flip : (a -> b -> c) -> b -> a -> c;
 flip f x y = f y x;
 

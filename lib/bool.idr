@@ -15,9 +15,9 @@ data so : Bool -> Set where oh : so True;
 infixl 4 &&,||;
 
 (||) : Bool -> Bool -> Bool;
-(||) False False = False;
+(||) False x = x;
 (||) _ _ = True;
 
 (&&) : Bool -> Bool -> Bool;
-(&&) True True = True;
+(&&) True x = x;
 (&&) _ _ = False;
