@@ -229,7 +229,7 @@ Manual allocation
 
 >   writeSC' (SApp (SVar malloc) [_,b,v])
 >     | malloc == name "malloc" =
->         "%memory(" ++ writeSC' b ++ "," ++ writeSC' v ++ ")"
+>         "%memory(%fixed," ++ writeSC' b ++ "," ++ writeSC' v ++ ")"
 
 Epic has if/then/else, so just use that
 

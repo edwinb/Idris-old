@@ -6,6 +6,9 @@ strLen str = __strlen str;
 strEq: String -> String -> Bool; [inline]
 strEq s1 s2 = __strEq s1 s2;
 
+charEq : Char -> Char -> Bool; [inline]
+charEq c1 c2 = __charToInt c1 == __charToInt c2;
+
 concat: String -> String -> String; [inline]
 concat s1 s2 = __concat s1 s2;
 
@@ -153,6 +156,20 @@ isNL : Char -> Bool;
 isNL '\r' = True;
 isNL '\n' = True;
 isNL _ = False;
+
+isAlpha : Char -> Bool;
+isAlpha x = let a = __charToInt 'a' in
+            let z = __charToInt 'z' in
+            let A = __charToInt 'A' in
+            let Z = __charToInt 'Z' in
+	    let x = __charToInt x in
+	    (x >= a && x <= z) || (x >= A && x <= Z);
+
+isDigit : Char -> Bool;
+isDigit x = let a = __charToInt '0' in
+            let z = __charToInt '9' in
+	    let x = __charToInt x in
+	    (x >= a && x <= z);
 
 words : String -> List String;
 words str with (strSpan (not . isSpace) str) {

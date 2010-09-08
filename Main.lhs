@@ -678,6 +678,7 @@ the appropriate thing, after applying the relevant transformations.
 > stringRev [Constant x] = case cast x :: Maybe String of
 >                            Just s -> Just (Constant (reverse s))
 >                            _ -> Nothing
+> stringRev _ = Nothing
 
 > stringSub :: [ViewTerm] -> Maybe ViewTerm
 > stringSub [Constant x, Constant start, Constant len] 
@@ -686,6 +687,7 @@ the appropriate thing, after applying the relevant transformations.
 >               (Just str, Just st, Just l) -> 
 >                   Just (Constant (take l (drop st str) :: String))
 >               _ -> Nothing
+> stringSub _ = Nothing
 
 > stringFind :: [ViewTerm] -> Maybe ViewTerm
 > stringFind [Constant x, Constant y] 
