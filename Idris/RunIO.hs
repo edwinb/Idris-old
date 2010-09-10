@@ -41,9 +41,9 @@ exec ctxt wurzel = do res <- runIO ctxt (view (whnf ctxt wurzel))
 
 runIO :: Context -> ViewTerm -> IO ViewTerm
 runIO ctxt (App (App (App (Name _ d) _) act) k)
-    | d == name "IODo" = runAction ctxt (parseAction act) k
+    | d == name "IO.IODo" = runAction ctxt (parseAction act) k
 runIO ctxt (App (App (Name _ l) _) res)
-    | l == name "IOReturn" = return res
+    | l == name "IO.IOReturn" = return res
 runIO _ x = fail $ "Not an IO action: " ++ show x
 
 data Action = ReadStr
@@ -62,31 +62,31 @@ parseAction x = parseAction' x [] where
   parseAction' (Name _ n) args = (getAction n args)
 
 getAction n []
-    | n == name "GetStr" = ReadStr
+    | n == name "IO.GetStr" = ReadStr
 getAction n [Constant str]
-    | n == name "PutStr"
+    | n == name "IO.PutStr"
         = case cast str of
              Just str' -> WriteStr str'
 getAction n [_,t]
-    | n == name "Fork"
+    | n == name "IO.Fork"
         = Fork t
 getAction n [Constant i]
-    | n == name "NewLock" 
+    | n == name "IO.NewLock" 
         = case cast i of
              Just i' -> NewLock i'
 getAction n [lock]
-    | n == name "DoLock"
+    | n == name "IO.DoLock"
         = DoLock (getLock lock)
-    | n == name "DoUnlock"
+    | n == name "IO.DoUnlock"
         = DoUnlock (getLock lock)
 getAction n []
-    | n == name "NewRef" = NewRef
+    | n == name "IO.NewRef" = NewRef
 getAction n [_,Constant i]
-    | n == name "ReadRef" 
+    | n == name "IO.ReadRef" 
         = case cast i of
              Just i' -> ReadRef i'
 getAction n [_,Constant i,val]
-    | n == name "WriteRef"
+    | n == name "IO.WriteRef"
         = case cast i of
              Just i' -> WriteRef i' val
 
