@@ -134,3 +134,14 @@ compare O O = cmpEQ;
 compare (S n) O = cmpGT _;
 compare O (S m) = cmpLT _;
 compare (S n) (S m) = compareAux (compare n m);
+
+ltNat : Nat -> Nat -> Bool;
+ltNat O (S x) = True;
+ltNat (S x) O = False;
+ltNat O O = False;
+ltNat (S x) (S y) = ltNat x y;
+
+max : Nat -> Nat -> Nat;
+max O n = n;
+max (S n) O = S n;
+max (S n) (S m) = S (max n m);

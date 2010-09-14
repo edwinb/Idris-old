@@ -108,7 +108,7 @@ undone bits, after a Qed
 >     at ctxt ReflP = refine reflN defaultGoal ctxt
 >     at ctxt (Fill t) = fill (ivor t) defaultGoal ctxt
 >     at ctxt Trivial = (trivial >|> refine reflN) defaultGoal ctxt
->     at ctxt SimpleSearch = (trivial >|> simplesearch raw uo) defaultGoal ctxt
+>     at ctxt SimpleSearch = (trivial >|> refine reflN >|> simplesearch raw uo) defaultGoal ctxt
 >     at ctxt (Believe t) = suspend_disbelief raw (ivor t) defaultGoal ctxt
 >     at ctxt (Use t) = prove_belief raw (ivor t) defaultGoal ctxt
 >     at ctxt (Decide t) = decide raw uo t defaultGoal ctxt
@@ -117,7 +117,7 @@ undone bits, after a Qed
 >     at ctxt (Rewrite True f t) = rewriteAll (ivor t) f defaultGoal ctxt
 >     at ctxt Compute = compute defaultGoal ctxt
 >     at ctxt (Unfold n) = unfold (toIvorName n) defaultGoal ctxt
->     at ctxt (RunTactic tm) = runtac (ivor tm) defaultGoal ctxt
+>     at ctxt (RunTactic tm) = runtac raw uo (ivor tm) defaultGoal ctxt
 >     at ctxt ProofTerm = do tm <- proofterm ctxt
 >                            fail (showVT raw (view tm))
 >     at ctxt Qed = qed ctxt
@@ -256,7 +256,7 @@ x: a:A -> b:B -> c:C -> Tactic, send x a b c to runtac below.
 >    let args = getExplicitArgs idgoal
 >    let dapp = makeIvorTerm noImplicit defDo uo (UN "__prf") raw 
 >                            (mkApp "[proof]" 0 dproc args)
->    (isItJust dapp >|> runtac dapp) goal ctxt
+>    (isItJust dapp >|> runtac raw uo dapp) goal ctxt
 
 > simplesearch :: Ctxt IvorFun -> UserOps -> Tactic
 > simplesearch raw uo goal ctxt = ttfail "Context search not implemented"
@@ -268,8 +268,8 @@ Run a tactic computed by mkTac
 Check the term actually computes a tactic, then evaluate it, then run the actual tactics
 the result term tells us to run.
 
-> runtac :: ViewTerm -> Tactic
-> runtac tmin goal ctxt = 
+> runtac :: Ctxt IvorFun -> UserOps -> ViewTerm -> Tactic
+> runtac raw uo tmin goal ctxt = 
 >    do tm <- checkCtxt ctxt goal tmin
 >       checkTac (viewType tm)
 >       tm' <- evalCtxt ctxt goal tm
@@ -301,6 +301,7 @@ the result term tells us to run.
 >                  \ g c -> case cast s :: Maybe String of
 >                              Just err -> ttfail err 
 >         exect' (Name _ ttrivial) | ttrivial == name "TTrivial" = trivial >|> refine reflN
+>         exect' (Name _ ttrivial) | ttrivial == name "TSearchContext" = trivial >|> simplesearch raw uo >|> refine reflN
 >         exect' tm = \ g c -> ttfail "Couldn't compute tactic"
 
 XXX: Auto-rewrite: user can add rewrite rules, auto-rewrite repeatedly

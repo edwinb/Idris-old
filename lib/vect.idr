@@ -18,6 +18,12 @@ natToFin : (x:Nat) -> Fin (S x);
 natToFin O = fO;
 natToFin (S k) = fS (natToFin k);
 
+ltFin : Fin n -> Fin n -> Bool;
+ltFin fO (fS x) = True;
+ltFin (fS x) fO = False;
+ltFin fO fO = False;
+ltFin (fS x) (fS y) = ltFin x y;
+
 vlookup : (Fin k) -> (Vect A k) -> A;
 vlookup fO (x :: xs) = x;
 vlookup (fS k) (x :: xs) = vlookup k xs;
