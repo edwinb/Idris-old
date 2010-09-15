@@ -23,7 +23,7 @@ __eq_repl : (A:Set)->(x:A) -> (y:A) -> (q:(x=y)) -> (P:(m:A)->Set) -> (p:P x) ->
 __eq_repl A x x (refl x) P p = p;
 
 __eq_sym : (A:Set) -> (a:A) -> (b:A) -> (p:(a=b)) -> (b=a);
-__eq_sym A a a p = refl _;
+__eq_sym A a a (refl _) = refl _;
 
 -- For proofs which should not be stored at run-time. Programs can
 -- construct objects of type Proof A, and manipulate them,
