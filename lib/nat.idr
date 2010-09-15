@@ -71,7 +71,7 @@ mult_nO : (n:Nat) -> ((mult n O) = O);
 mult_nO O = refl _;
 mult_nO (S k) = mult_nO k;
 
-mult_nSm : (n:Nat ,m:Nat) -> ((mult n (S m)) = (plus n (mult n m)));
+mult_nSm : (n:Nat, m:Nat) -> ((mult n (S m)) = (plus n (mult n m)));
 mult_nSm proof {
         %intro;
         %induction n;

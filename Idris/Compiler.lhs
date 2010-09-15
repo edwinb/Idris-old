@@ -272,7 +272,7 @@ HACK for string equality
 >       where list [] = ""
 >             list [a] = writeSC' a
 >             list (x:xs) = writeSC' x ++ ", " ++ list xs
->   writeSC' (SLet n val b) = "let " ++ show n ++ " : Any = " ++ writeSC' val
+>   writeSC' (SLet n val b) = "let " ++ quotename (show n) ++ " : Any = " ++ writeSC' val
 >                          ++ " in ("  ++ writeSC' b ++ ")"
 >   writeSC' (SCCase b alts@((SConstAlt _ _):_))
 >                    = writeConstAlts fname erasure (writeSC' b) alts
@@ -324,8 +324,8 @@ HACK for string equality
 > writeAlt n e (SAlt _ t args b) = "Con " ++ show t ++ " (" ++ list args ++ ") -> "
 >                                ++ writeSC n e b
 >    where list [] = ""
->          list [a] = show a ++ ":Any"
->          list (x:xs) = show x ++ ":Any, " ++ list xs
+>          list [a] = quotename (show a) ++ ":Any"
+>          list (x:xs) = quotename (show x) ++ ":Any, " ++ list xs
 > writeAlt n e (SDefault b) = "Default -> " ++ writeSC n e b
 > writeAlt n e _ = "Default -> error \"unhandled case in " ++ show n ++ "\""
 

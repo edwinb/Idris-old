@@ -68,3 +68,4 @@ Executable     idris
                                 old-time, old-locale, binary, epic>=0.1.6, Cabal
                                 
                Extensions:      MagicHash, UndecidableInstances, OverlappingInstances, PatternGuards
+               ghc-prof-options: -auto-all
