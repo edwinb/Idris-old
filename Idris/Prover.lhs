@@ -258,8 +258,29 @@ x: a:A -> b:B -> c:C -> Tactic, send x a b c to runtac below.
 >                            (mkApp "[proof]" 0 dproc args)
 >    (isItJust dapp >|> runtac raw uo dapp) goal ctxt
 
+Try to solve a goal by looking through the global context. Obviously, this is
+a bit dumb.
+
+This is intended for type classes, so perhaps eventually what we'll want is
+a way of just searching for dictionaries.
+
 > simplesearch :: Ctxt IvorFun -> UserOps -> Tactic
-> simplesearch raw uo goal ctxt = ttfail "Context search not implemented"
+> simplesearch raw uo goal ctxt = tryAll 5 allns goal ctxt
+>    where tryAll 0 _ _ _  = ttfail "Can't find a solution"
+>          tryAll d [] g c = ttfail "Can't find a solution"
+>          tryAll d ((i,fn):rest) g c | isFun (ivorDef fn) && take 8 (show i) == "instance"
+>                 = (tryRefine d (show i) >|> tryAll d rest) g c
+>          tryAll d (_:rest) g c = tryAll d rest g c
+
+>          isFun (Just (SimpleDef _)) = True
+>          isFun (Just (PattDef _)) = True
+>          isFun _ = False
+>          allns = ctxtAlist raw
+
+>          tryRefine d n g c = do goald <- goalData c False defaultGoal
+>                                 c <- refine n g c
+>                                 if (allSolved c) then return c else
+>                                     (beta >-> tryAll (d-1) allns) defaultGoal c
 
 
 
@@ -302,7 +323,7 @@ the result term tells us to run.
 >                              Just err -> ttfail err 
 >         exect' (Name _ ttrivial) | ttrivial == name "TTrivial" = trivial >|> refine reflN
 >         exect' (Name _ ttrivial) | ttrivial == name "TSearchContext" = trivial >|> simplesearch raw uo >|> refine reflN
->         exect' tm = \ g c -> ttfail "Couldn't compute tactic"
+>         exect' tm = \ g c -> ttfail $ "Couldn't compute tactic " ++ show tm
 
 XXX: Auto-rewrite: user can add rewrite rules, auto-rewrite repeatedly
 rewrites by these rules until there's no more to rewrite, or until a
