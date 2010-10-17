@@ -5,7 +5,7 @@
 Pattern matching compiler, convert to simple case expressions
 
 > import Idris.AbsSyntax
-> import Ivor.TT
+> import Ivor.TT hiding (SimpleCase(..), CaseAlt(..))
 
 > import Data.Typeable
 > import Debug.Trace

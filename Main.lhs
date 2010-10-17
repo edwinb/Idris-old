@@ -402,6 +402,9 @@ the appropriate thing, after applying the relevant transformations.
 >                                              (idris_transforms ist)
 >                                              (transforms (idris_fixities ist))
 >                                               (name n) pats)
+>                                   -- let Right (args, sc) = getCompiledPatternDef ctxt (name n)
+>                                   -- putStrLn "\nInternally compiled as:\n"
+>                                   -- print (args, sc)
 >            _ -> case getInductive ctxt (name n) of
 >                   Right ind -> showInductive n ctxt (idris_transforms ist) 
 >                                               (constructors ind)

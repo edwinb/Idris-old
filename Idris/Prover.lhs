@@ -315,6 +315,8 @@ the result term tells us to run.
 >               = exect x >|> exect y
 >         exect' (App (App (Name _ tfill) _) y) | tfill == name "TFill" 
 >               = fill y >+> keepSolving
+>         exect' (App (App (Name _ tdecide) _) y) | tdecide == name "TDecide" 
+>               = isItJust y >+> keepSolving
 >         exect' (App (Name _ trefine) (Constant s)) | trefine == name "TRefine" =
 >                  case cast s :: Maybe String of
 >                    Just str -> refine str

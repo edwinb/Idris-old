@@ -4,7 +4,7 @@
 
 > import Idris.AbsSyntax
 > import Idris.PMComp
-> import Ivor.TT
+> import Ivor.TT hiding (SimpleCase(..), CaseAlt(..))
 > 
 > import Control.Monad.State
 > import Data.Typeable

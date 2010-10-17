@@ -16,7 +16,7 @@ infixl 4 &&,||;
 
 (||) : Bool -> Bool -> Bool;
 (||) False x = x;
-(||) _ _ = True;
+(||) True _ = True;
 
 (&&) : Bool -> Bool -> Bool;
 (&&) True x = x;

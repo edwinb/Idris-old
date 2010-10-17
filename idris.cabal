@@ -1,5 +1,5 @@
 Name:           idris
-Version:        0.1.6
+Version:        0.1.7
 License:        BSD3
 License-file:   LICENSE
 Author:         Edwin Brady
@@ -64,7 +64,7 @@ Executable     idris
                               Idris.PartialEval
 
                Build-depends:   base>=4 && <5, containers, array, parsec, mtl,
-                                readline, ivor>=0.1.13, directory, haskell98,
+                                readline, ivor>=0.1.14, directory, haskell98,
                                 old-time, old-locale, binary, epic>=0.1.6, Cabal
                                 
                Extensions:      MagicHash, UndecidableInstances, OverlappingInstances, PatternGuards

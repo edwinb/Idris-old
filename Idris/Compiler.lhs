@@ -6,7 +6,7 @@
 > import Idris.ConTrans
 > import Idris.SCTrans
 > import Idris.Lib
-> import Ivor.TT hiding (transform)
+> import Ivor.TT hiding (transform, SimpleCase(..), CaseAlt(..))
 
 > import System
 > import System.IO
