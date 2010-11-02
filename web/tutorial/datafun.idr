@@ -115,23 +115,23 @@ operators can use any of the symbols ":+-\\*\\/=_.?|&><!@$%^~".
 We can define functions on dependent types such as "Vect" in the
 same way as on simple types such as "List" and "Nat" above, by pattern
 matching. The type of a function over "Vect" will describe what
-happens to the lengths of the vectors involved. For example, "vappend"
+happens to the lengths of the vectors involved. For example, "vapp"
 appends two "Vect"s: --}
 
-vappend : Vect a n -> Vect a m -> Vect a (plus n m);
-vappend VNil      VNil = VNil;
-vappend (x :: xs) ys   = x :: vappend xs ys;
+vapp : (Vect A n) -> (Vect A m) -> (Vect A (plus n m));
+vapp VNil ys = ys;
+vapp (x :: xs) ys = x :: vapp xs ys;
 
-{-- The type of "vappend" states that the resulting
+{-- The type of "vapp" states that the resulting
 vector's length will be the sum of the input lengths. If we get the
 definition wrong in such a way that this does not hold, Idris will not
 accept the definition. For example:
 --}
 
 {->
-vappend : Vect a n -> Vect a m -> Vect a (plus n m);
-vappend VNil      VNil = VNil;
-vappend (x :: xs) ys   = x :: vappend xs xs; -- BROKEN
+vapp : Vect a n -> Vect a m -> Vect a (plus n m);
+vapp VNil      ys = ys;
+vapp (x :: xs) ys   = x :: vapp xs xs; -- BROKEN
 
 $ idris datafun.idr
 datafun.idr:3:Can't unify Vect z4 z0 and Vect z4 z3
