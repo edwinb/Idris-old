@@ -23,9 +23,10 @@ data List a = Nil | Cons a (List a); -- Polymorphic lists
 >-}
 
 {-- The above declarations are taken from the standard
-library. Unary natural numbers can be either zero ("O"), or the successor of
-another natural number ("S k"). Lists can either be empty ("Nil") or a
-value added to the front of another list ("Cons x xs").
+library. Unary natural numbers can be either zero ("O" - that's a capital
+letter 'o', not the digit), or the successor of another natural number ("S k").
+Lists can either be empty ("Nil") or a value added to the front of another list
+("Cons x xs").
 
 Functions are implemented by pattern matching, again using a similar
 syntax to Haskell. The main difference is that Idris requires type
