@@ -95,7 +95,7 @@ feof   : File -> IO ();
 
 -- Subsection: Threads
 
-{-- Thread operations include "fork" for spwaning a new thread, and
+{-- Thread operations include "fork" for spawning a new thread, and
     functions for creating and using "Lock"s. "lock" will block until
     the given lock is available. --}
 
