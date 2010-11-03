@@ -90,7 +90,7 @@ fclose : File -> IO ();
 
 fread  : File -> IO String;
 fwrite : File -> String -> IO ();
-feof   : File -> IO ();
+feof   : File -> IO Bool;
 >-}
 
 -- Subsection: Threads
