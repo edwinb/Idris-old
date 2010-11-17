@@ -1343,6 +1343,9 @@ starts as a best guess.
 > idrisError ivs (NoSuchVar n) = "No such variable as " ++ show n
 > idrisError ivs (CantInfer n tm) = "Can't infer value for " ++ show n ++ " in " ++ (showVT ivs tm)
 > idrisError ivs (ErrContext s e) = s ++ idrisError ivs e
+> idrisError ivs (AmbiguousName ns) = "Ambiguous name " ++ show ns
+> idrisError ivs (NotConvertible x y) = "Not convertible: " ++ (showVT ivs x) ++ " and " ++ (showVT ivs y)
+
 
 > getOpName (UN ('_':'_':'o':'p':'_':op)) = (True, showOp op) where
 >          showOp ('_':cs) = case span isDigit cs of

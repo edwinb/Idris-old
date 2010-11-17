@@ -14,13 +14,16 @@ getSigVal (Exists a v) = v;
 
 data Pair a b = mkPair a b;
 
+id : a -> a;
+id x = x;
+
 rewrite : {A:B->Set} -> A m -> (m=n) -> A n;
 rewrite t (refl m) = t;
 
 -- This way is needed for Ivor's rewriting tactic
 
 __eq_repl : (A:Set)->(x:A) -> (y:A) -> (q:(x=y)) -> (P:(m:A)->Set) -> (p:P x) -> (P y);
-__eq_repl A x x (refl x) P p = p;
+__eq_repl A x x (refl _) P p = p;
 
 __eq_sym : (A:Set) -> (a:A) -> (b:A) -> (p:(a=b)) -> (b=a);
 __eq_sym A a a (refl _) = refl _;
@@ -40,21 +43,4 @@ prove x = __mkProof x;
 
 proof_bind : Proof A -> (A -> Proof B) -> Proof B;
 proof_bind (__mkProof a) p = p a;
-
--- Used by the 'believe' tactic to make a temporary proof. Programs
--- using this are not to be trusted!
-
-__Prove_Anything : {A:Set} -> A;
-
--- Generate a refl so that __eq_repl can reduce.
-
-__Suspend_Disbelief : (m:A) -> (n:A) -> (m = n);
-__Suspend_Disbelief m n ?= refl m; [__disbelieve]
-
-__disbelieve proof {
-	%intro;
-	%use value;
-	%refine __Prove_Anything;
-	%qed;
-};
 

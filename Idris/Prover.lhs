@@ -212,7 +212,7 @@ suspending disbelief about value equalities, not polymorphic values.
 >                    rty <- checkCtxt ctxt goal arg1
 >                    when (viewType rty == Star) $
 >                         fail ((show arg1) ++ " is a type")
->                    ctxt' <- rewrite rt True goal ctxt
+>                    ctxt' <- rewrite rt False goal ctxt
 >                    rewriteDiffs ds goal ctxt'
 
 As above, but instead of just believing the value, insert subgoals for
@@ -233,13 +233,13 @@ the required equality proofs
 >          fill val goal ctxt
 >    where rewriteDiffs [] goal ctxt = idTac goal ctxt
 >          rewriteDiffs ((arg1, arg2):ds) goal ctxt
->               = do let claimTy = eqP arg1 arg2
+>               = do let claimTy = eqP arg2 arg1
 >                    claimName <- uniqueName ctxt (name "equality")
 >                    ctxt <- claim claimName claimTy goal ctxt
 >                    rty <- checkCtxt ctxt goal arg1
 >                    when (viewType rty == Star) $
 >                         fail ((show arg1) ++ " is a type")
->                    ctxt' <- rewrite (Name Unknown claimName) True goal ctxt
+>                    ctxt' <- rewrite (Name Unknown claimName) False goal ctxt
 >                    rewriteDiffs ds goal ctxt'
 
 decide; given a goal of the form X a b c, and a function x of type

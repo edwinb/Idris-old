@@ -495,6 +495,8 @@ the appropriate thing, after applying the relevant transformations.
 >              c <- addExternalFn c (opFn StringRev) 1 stringRev "String->String"
 >              c <- addExternalFn c (opFn StringSub) 3 stringSub "String->Int->Int->String"
 >              c <- addExternalFn c (opFn StringFind) 2 stringFind "String->Char->Int"
+>              c <- addExternalFn c (name "__Prove_Anything") 3 proveAnything
+>                                   "(A:*)->(B:*)->A->B"
 >              c <- addExternalFn c (name "__lazy") 1 runLazy "(A:*)A->A"
 >              c <- addExternalFn c (name "__effect") 1 runEffect "(A:*)A->A"
 >              return c
@@ -701,6 +703,10 @@ the appropriate thing, after applying the relevant transformations.
 >                       Nothing -> Just (Constant ((-1) :: Int))
 >                   _ -> Nothing
 > stringFind _ = Nothing
+
+> proveAnything :: [ViewTerm] -> Maybe ViewTerm
+> proveAnything [_,_,x] = Just x
+> proveAnything _ = Nothing
 
 > runLazy :: [ViewTerm] -> Maybe ViewTerm
 > runLazy [_,x] = Just x

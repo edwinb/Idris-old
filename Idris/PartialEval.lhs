@@ -3,7 +3,8 @@ Various bits and pieces to help do partial evaluation better.
 This module doesn't do PE itself - rather, it sets up the %transform, %spec
 and %freeze annotations.
 
-> module Idris.PartialEval(addPEdefs, staticDecls, getNewDefs) where
+> module Idris.PartialEval(partialeval, addPEdefs, staticDecls, 
+>                          getNewDefs) where
 
 > import Idris.AbsSyntax
 > import Ivor.TT as TT
@@ -282,3 +283,28 @@ no more. Add any dependencies on static arguments which are dependencies on
 >          getName n = case lookup n names of
 >                         Just x -> x
 >                         Nothing -> UN (show n)
+
+Go through the context, evaluating enough to work out what the transform
+rules need to be. Return a new set of transform rules, and specialised versions
+of PEable functions.
+
+Algorithm is:
+
+In a definition f, PE(f):
+
+For each static function I, with static positions s1...sn:
+* If it appears in a pattern clause,  
+    make a new function Ispec di = mkSpec (I di si)
+       repeat PE(Ispec)
+    add a transform I ?di si => Ispec ?di
+          if any si is a name, freeze it
+
+mkSpec(I di si):
+
+* Evaluate I di si. Any si which is a name, expand only once.
+  After the top level I, do not evaluate any static arguments of any I -
+    either they are all expanded, or we'll PE them separately.
+
+> partialeval :: Ctxt IvorFun -> Context -> Statics -> UserOps -> 
+>                (Context, UserOps)
+> partialeval raw ctxt sts uos = (ctxt, uos)
