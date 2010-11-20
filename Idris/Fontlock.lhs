@@ -26,6 +26,7 @@
 > mkMarkups ctxt = map mkMarkup (map (\ (x,y) -> (x, rawDecl y)) (ctxtAlist ctxt))
 
 > mkMarkup :: (Id, Decl) -> (String, Markup)
+> mkMarkup (NS _ i, f) = mkMarkup (i, f)
 > mkMarkup (n, Fun _ _) = (show n, FN)
 > mkMarkup (n, Fwd _ _ _) = (show n, FN)
 > mkMarkup (n, TermDef _ _ _) = (show n, FN)
@@ -154,7 +155,7 @@
 >     html ((LATEX, t):xs) 
 >        = html (skipnl xs)
 >     html ((AUTHOR, t):xs) 
->        = -- "</code>\n\n<h4>Author: " ++ t ++ "</h4>\n\n<code>" ++ 
+>        = "</code>\n\n<h4>" ++ t ++ "</h4>\n\n<code>" ++ 
 >          "</code>" ++ sechead xs ++ "\n\n<code>" ++ html (skipnl xs)
 >     html ((SEC, t):xs) 
 >        = "</code><a name=\"" ++ secname t ++ "\">\n\n<h3>" ++ t ++ "</h3>\n\n<code>" ++ html (skipnl xs)

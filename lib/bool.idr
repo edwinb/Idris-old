@@ -20,4 +20,4 @@ infixl 4 &&,||;
 
 (&&) : Bool -> Bool -> Bool;
 (&&) True x = x;
-(&&) _ _ = False;
+(&&) False _ = False;
