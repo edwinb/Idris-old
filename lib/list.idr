@@ -73,3 +73,7 @@ span' p (Cons x xs) acc = if (p x) then (span' p xs (Cons x acc))
 
 span : (a -> Bool) -> List a -> (List a & List a);
 span p xs = span' p xs Nil;
+
+length : List a -> Int;
+length Nil = 0;
+length (Cons x xs) = 1 + length xs;
