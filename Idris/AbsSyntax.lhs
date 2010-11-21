@@ -1012,7 +1012,7 @@ allowing recursion in them).
 >                = case v of
 >                      RVar f l n _ -> 
 >                        case findSyn n syns of
->                          Just (a, rhs) -> 
+>                          Just (a, rhs) -> -- trace (show (n, rhs, a, args)) $ 
 >                              if (length a == length args)
 >                                 then syn $ replSyn f l rhs (zip a args)
 >                                 else o
@@ -1093,6 +1093,9 @@ FIXME: I think this'll fail if names are shadowed.
 >     -- out of an application
 >     where ap ex v@(RVar f l n _)
 >            = case ctxtLookupName ctxt (thisNamespace using) n of
+>                   -- leave syntax definitions alone and expand later
+>                   Right (IvorFun _ _ _ _ (SynDef _ _ _) _ _ _, _)
+>                       -> RVar f l n Unknown
 >                   Right (ifn@(IvorFun _ (Just ty) imp _ _ _ _ _), fulln) -> 
 >                     let pargs = case lookup n pnames of
 >                                   Nothing -> []
