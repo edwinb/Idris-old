@@ -146,10 +146,11 @@ attached).
 >              (IvorFun Nothing Nothing 0 Nothing decl [] [] [])) using ui 
 >                   (UO fix trans' fr syns) ds
 > mif opt ctxt acc using ui uo@(UO fix trans fr syns) (decl@(SynDef f args rhs):ds) 
->         = let sname = mkName (thisNamespace using) f in
+>         = let sname = mkName (thisNamespace using) f 
+>               syns' = addEntry syns (thisNamespace using) sname (Syntax sname args rhs) in
 >               mif opt ctxt (addEntry acc (thisNamespace using) f
 >                 (IvorFun Nothing Nothing 0 Nothing decl [] [] []))
->               using ui (UO fix trans fr ((Syntax sname args rhs):syns)) ds
+>               using ui (UO fix trans fr syns') ds
 
 Don't add yet! Or everything will be frozen in advance, rather than being 
 frozen after they are needed.

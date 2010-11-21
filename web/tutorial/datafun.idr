@@ -115,12 +115,14 @@ operators can use any of the symbols ":+-\\*\\/=_.?|&><!@$%^~".
 We can define functions on dependent types such as "Vect" in the
 same way as on simple types such as "List" and "Nat" above, by pattern
 matching. The type of a function over "Vect" will describe what
-happens to the lengths of the vectors involved. For example, "vapp"
-appends two "Vect"s: --}
+happens to the lengths of the vectors involved. For example, "vapp", defined 
+in the library, appends two "Vect"s: --}
 
+{->
 vapp : (Vect A n) -> (Vect A m) -> (Vect A (plus n m));
 vapp VNil ys = ys;
 vapp (x :: xs) ys = x :: vapp xs ys;
+>-}
 
 {-- The type of "vapp" states that the resulting
 vector's length will be the sum of the input lengths. If we get the

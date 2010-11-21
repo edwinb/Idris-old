@@ -154,7 +154,7 @@ these days instead...
 >             OK x fixes' sts' -> return (x, fixes', sts')
 >             Err x fixes' sts' err -> do putStrLn err 
 >                                         return (x, fixes', sts')
->     let ist = addTransforms (IState alldefs (decls ++ ptree) metas opts ops [] [] imps (mkNameMap alldefs) static' sts') ctxt 
+>     let ist = addTransforms (IState alldefs (decls ++ ptree) metas opts ops [] newCtxt imps (mkNameMap alldefs) static' sts') ctxt 
 >     return (ctxt, ist { idris_fixities = fixes' })
 
 > data REPLRes = Quit | Continue | NewCtxt IdrisState Context

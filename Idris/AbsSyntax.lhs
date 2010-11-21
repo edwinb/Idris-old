@@ -82,7 +82,7 @@ User defined operators have associativity and precedence
 > data UserOps = UO { fixityDecls :: Fixities,
 >                     transforms :: [(ViewTerm, ViewTerm)],
 >                     frozen :: [Id],
->                     syndefs :: [Syntax] }
+>                     syndefs :: Ctxt Syntax }
 >              deriving Show
 
 Function types and clauses are given separately, so we'll parse them
@@ -604,15 +604,18 @@ Things we've partially evaluated that transform rules already exist for
 >       idris_options :: [Opt], -- global options
 >       idris_fixities :: UserOps, -- infix operators and precedences
 >       idris_transforms :: [Transform], -- optimisations
->       idris_syntax :: [Syntax], -- syntax macros
+>       idris_syntax :: Ctxt Syntax, -- syntax macros
 >       idris_imports :: [FilePath], -- included files
 >       idris_names :: [(Name, Id)], -- map ivor names back to idris names
 >       idris_static :: Statics, -- map from functions to static args
 >       idris_static_used :: StaticUsed
 >     }
 
+> instance Show (Ctxt Syntax) where
+>     show xs = show (ctxtAlist xs)
+
 > initState :: [Opt] -> IdrisState
-> initState opts = IState newCtxt [] [] opts (UO [] [] [] []) [] [] [] [] [] []
+> initState opts = IState newCtxt [] [] opts (UO [] [] [] newCtxt) [] newCtxt [] [] [] []
 
 Add implicit arguments to a raw term representing a type for each undefined 
 name in the scope, returning the number of implicit arguments the resulting
@@ -1020,9 +1023,15 @@ allowing recursion in them).
 >                             Just ([], rhs) -> syn $ replSyn f l rhs []
 >                             _ -> RVar f l n Unknown
 
->           findSyn n [] = Nothing
->           findSyn n ((Syntax f as rhs):xs) | n == f = Just (as, rhs)
->                                            | otherwise = findSyn n xs
+>           findSyn n synct =
+>               case ctxtLookup synct (thisNamespace using) n of
+>                 (Right (Syntax f as rhs)) -> Just (as, rhs)
+>                 (Left err) -> Nothing -- FIXME: need to report an error
+>                                       -- if it's ambiguous
+
+>           -- findSyn n [] = Nothing
+>           -- findSyn n ((Syntax f as rhs):xs) | n == f = Just (as, rhs)
+>           --                                  | otherwise = findSyn n xs
 
 >           replSyn f l t@(RVar _ _ n ty) as = case lookup n as of
 >                                                Just v -> v
