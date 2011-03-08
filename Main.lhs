@@ -453,6 +453,8 @@ the appropriate thing, after applying the relevant transformations.
 >                                "Int->Int->Int"
 >              c <- addBinOp c (opFn Divide) (div::Int->Int->Int)
 >                                "Int->Int->Int"
+>              c <- addBinOp c (opFn Modulo) (mod::Int->Int->Int)
+>                                "Int->Int->Int"
 >              c <- addBinOp c (opFn FPlus) ((+)::Double->Double->Double) "Float->Float->Float"
 >              c <- addBinOp c (opFn FMinus) ((-)::Double->Double->Double)
 >                                "Float->Float->Float"

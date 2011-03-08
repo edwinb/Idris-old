@@ -393,7 +393,7 @@ Operators, more precisely, are built-in functions on primitive types which both 
 typechecker and compiler need to know how to run. First we have the usual set of infix 
 operators (plus John Major equality):
 
-> data Op = Plus  | Minus  | Times  | Divide | Concat | JMEq
+> data Op = Plus  | Minus  | Times  | Divide | Modulo | Concat | JMEq
 >         | FPlus | FMinus | FTimes | FDivide
 >         | OpEq  | OpLT   | OpLEq  | OpGT   | OpGEq  
 >         | OpFEq | OpFLT  | OpFLEq | OpFGT  | OpFGEq 
@@ -412,7 +412,7 @@ Finally some primitive operations on primitive types.
 >         | StringFind | StringSub
 >    deriving (Eq, Enum)
 
-> allOps = [Plus,Minus,Times,Divide,FPlus,FMinus,FTimes,FDivide,
+> allOps = [Plus,Minus,Times,Divide,Modulo,FPlus,FMinus,FTimes,FDivide,
 >           Concat,ShL,ShR,JMEq,OpEq,OpLT,OpLEq,OpGT,OpGEq,
 >           OpFEq,OpFLT,OpFLEq,OpFGT,OpFGEq]
 
@@ -421,6 +421,7 @@ Finally some primitive operations on primitive types.
 >     show Minus = "-"
 >     show Times = "*"
 >     show Divide = "/"
+>     show Modulo = "%"
 >     show FPlus = "+."
 >     show FMinus = "-."
 >     show FTimes = "*."
@@ -446,6 +447,7 @@ Finally some primitive operations on primitive types.
 > opFn Minus = (name "__subInt")
 > opFn Times = (name "__mulInt")
 > opFn Divide = (name "__divInt")
+> opFn Modulo = (name "__modInt")
 > opFn FPlus = (name "__addFloat")
 > opFn FMinus = (name "__subFloat")
 > opFn FTimes = (name "__mulFloat")

@@ -36,6 +36,9 @@ infixl 9 *,/,*.,/.;
 (/) : Int -> Int -> Int; [inline]
 (/) x y = __divInt x y;
 
+mod : Int -> Int -> Int; [inline]
+mod x y = __modInt x y;
+
 (<) : Int -> Int -> Bool; [inline]
 (<) x y = __intlt x y;
 

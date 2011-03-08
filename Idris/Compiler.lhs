@@ -140,8 +140,10 @@ that we avoid pattern matching where the programmer didn't ask us to.
 >      -- dumpNames scs
 >      mapM_ (writeDef eH erasure) scs
 >      hClose eH
->      let cmd = "epic " ++ efile ++ " -o " ++ ofile ++ " " ++
->                concat (map (' ':) clink) ++ " -checking 0"
+>      let cmd = "epic " ++ efile ++ " -o " ++ ofile ++
+>                " -checking 0 " ++ 
+>                concat (map (' ':) clink) 
+>      -- putStrLn cmd
 >      exit <- system cmd
 >      -- removeFile efile
 >      if (exit /= ExitSuccess) 
