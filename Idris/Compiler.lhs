@@ -380,6 +380,7 @@ this on tag, we know the type. Check 'FType' in io.idr.
 > fToEpic (SCon _ 1) = "Int"
 > fToEpic (SCon _ 2) = "String"
 > fToEpic (SCon _ 3) = "Ptr"
+> fToEpic (SCon _ 4) = "Float"
 > fToEpic _ = "Any" -- idris data type
 
 > tempfile :: IO (FilePath, Handle)

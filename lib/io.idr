@@ -3,13 +3,14 @@ include "list.idr";
 -- FAny is to allow C functions to build up Idris data
 -- types. Obviously this needs care...
 
-data FType = FUnit | FInt | FStr | FPtr | FAny Set
+data FType = FUnit | FInt | FStr | FPtr | FFloat | FAny Set
            | FIntP (Int -> Bool);
 
 i_ftype : FType -> Set;
 i_ftype FInt = Int;
 i_ftype FStr = String;
 i_ftype FPtr = Ptr;
+i_ftype FFloat = Float;
 i_ftype FUnit = ();
 i_ftype (FAny ty) = ty;
 i_ftype (FIntP p) = (x : Int ** so (p x)); 

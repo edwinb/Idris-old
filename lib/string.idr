@@ -100,6 +100,9 @@ readNat str with readInt str {
   | Nothing = Nothing;
 }
 
+showFloat: Float -> String;
+showFloat n = __floatToString n;
+
 strToList: String -> List Char;
 strToList s with strUncons s {
   | Just (h, t) = Cons h (strToList t);

@@ -21,3 +21,15 @@ infixl 4 &&,||;
 (&&) : Bool -> Bool -> Bool;
 (&&) True x = x;
 (&&) False _ = False;
+
+or_commutes : (x:Bool) -> (y:Bool) -> ((x || y) = (y || x));
+or_commutes True False  = refl _;
+or_commutes True True   = refl _;
+or_commutes False False = refl _;
+or_commutes False True  = refl _;
+
+and_commutes : (x:Bool) -> (y:Bool) -> ((x && y) = (y && x));
+and_commutes True False  = refl _;
+and_commutes True True   = refl _;
+and_commutes False False = refl _;
+and_commutes False True  = refl _;
