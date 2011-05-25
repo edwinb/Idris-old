@@ -165,14 +165,14 @@ isAlpha x = let a = __charToInt 'a' in
             let z = __charToInt 'z' in
             let A = __charToInt 'A' in
             let Z = __charToInt 'Z' in
-	    let x = __charToInt x in
-	    (x >= a && x <= z) || (x >= A && x <= Z);
+	    let x' = __charToInt x in
+	    (x' >= a && x' <= z) || (x' >= A && x' <= Z);
 
 isDigit : Char -> Bool;
 isDigit x = let a = __charToInt '0' in
             let z = __charToInt '9' in
-	    let x = __charToInt x in
-	    (x >= a && x <= z);
+	    let x' = __charToInt x in
+	    (x' >= a && x' <= z);
 
 words : String -> List String;
 words str with (strSpan (not . isSpace) str) {

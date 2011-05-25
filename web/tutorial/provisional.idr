@@ -141,7 +141,7 @@ kind of 'appendix' to the program): --}
 paritySSe proof {
 	%intro;
 	%use value;
-	%rewrite plus_nSm {n=j} {m=j};
+	%rewrite plus_nSm j j;
 	%refl;
 	%qed;
 };
@@ -156,7 +156,7 @@ the source file. --}
 paritySSo proof {
 	%intro;
 	%use value;
-	%rewrite plus_nSm {n=j} {m=j};
+	%rewrite plus_nSm j j;
 	%refl;
 	%qed;
 };
@@ -237,7 +237,7 @@ of "parity", and the proof proceeds in the same way: --}
 ntbOdd proof {
 	%intro;
 	%use value;
-	%rewrite plus_nSm {n=j} {m=j};
+	%rewrite plus_nSm j j;
 	%refl;
 	%qed;
 };

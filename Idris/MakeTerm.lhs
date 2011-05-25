@@ -23,7 +23,7 @@ attached).
 >                 (IvorFun, [Decl])
 
 > makeIvorFun using ui uo ctxt decl (Function n ty clauses file line) flags
->     = let (rty, imp) = addImplWith using ctxt ty
+>     = let (rty, imp) = addImplWith using ctxt (syntax ctxt using uo ty)
 >           ity = makeIvorTerm using ui uo n ctxt rty
 >           extCtxt = addEntry ctxt (thisNamespace using) n (IvorFun Nothing (Just ity) 
 >                                       imp Nothing decl flags (map (+p) (getLazy ty)) (map (+p) (getStatic ty)))

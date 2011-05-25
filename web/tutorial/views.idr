@@ -67,7 +67,7 @@ parity (S (S k)) with parity k {
 paritySSe proof {
 	%intro;
 	%use value;
-	%rewrite plus_nSm {n=j} {m=j};
+	%rewrite plus_nSm j j;
 	%refl;
 	%qed;
 };
@@ -75,7 +75,7 @@ paritySSe proof {
 paritySSo proof {
 	%intro;
 	%use value;
-	%rewrite plus_nSm {n=j} {m=j};
+	%rewrite plus_nSm j j;
 	%refl;
 	%qed;
 };

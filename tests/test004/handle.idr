@@ -10,7 +10,7 @@ makeWeaker cmpEQ i = i;
 makeWeaker (cmpGT y) i ?= weaken (nweaken {k=y} i); [wkn]
 wkn proof {
         %intro;
-        %rewrite <- plus_nSm {n=X} {m=y};
+        %rewrite <- plus_nSm y X;
         %rewrite <- plus_comm X y;
         %fill value;
         %qed;

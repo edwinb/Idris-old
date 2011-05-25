@@ -364,6 +364,7 @@ value.
 >               | Ch Char
 >               | Fl Double
 >               | TYPE
+>               | LTYPE
 >               | StringType
 >               | IntType
 >               | FloatType
@@ -382,6 +383,7 @@ value.
 >     show (Ch c) = show c
 >     show (Fl d) = show d
 >     show TYPE = "Set"
+>     show LTYPE = "LSet"
 >     show IntType = "Int"
 >     show FloatType = "Float"
 >     show CharType = "Char"
@@ -705,14 +707,15 @@ Only do it in argument position
 >           addTy n = case lookupIdx n using of
 >                        Just (t, i) -> ((n,t), i)
 >                        _ -> ((n,RPlaceholder), -1)
->           pibind :: Plicit -> [(Id, RawTerm)] -> RawTerm -> RawTerm
->           pibind plicit [] raw = raw
->           pibind plicit ((n, ty):ns) raw
->                      = RBind n (Pi plicit [] ty) (pibind plicit ns raw)
 
 >           parambind :: [(Id, RawTerm)] -> RawTerm -> RawTerm
 >           parambind xs (RBind n b@(Pi Im strict ty) sc) = RBind n b (parambind xs sc)
 >           parambind xs sc = pibind Ex xs sc
+
+> pibind :: Plicit -> [(Id, RawTerm)] -> RawTerm -> RawTerm
+> pibind plicit [] raw = raw
+> pibind plicit ((n, ty):ns) raw
+>     = RBind n (Pi plicit [] ty) (pibind plicit ns raw)
 
 Is this, or something like it, in the Haskell libraries?
 
@@ -957,6 +960,7 @@ scripts
 > toIvorConst (Ch c) = Constant c
 > toIvorConst (Fl f) = Constant f
 > toIvorConst TYPE = Star
+> toIvorConst LTYPE = LinStar
 > toIvorConst StringType = Name Unknown (name "String")
 > toIvorConst IntType = Name Unknown (name "Int")
 > toIvorConst FloatType = Name Unknown (name "Float")
@@ -977,7 +981,7 @@ allowing recursion in them).
 
 > syntax :: Ctxt IvorFun -> Implicit -> UserOps -> RawTerm -> RawTerm
 > syntax ctxt using (UO uo _ _ syns) tm 
->   = let ans = syn (fixes tm) in
+>   = let ans = shiftimpl (syn (fixes tm)) in
 >        -- trace ("BEFORE: " ++ showImp False (fixes tm) ++ "\nAFTER: " ++
 >         --      showImp False ans) 
 >         ans
@@ -1046,7 +1050,14 @@ allowing recursion in them).
 >                 = RUserInfix f l b op (replSyn f l x as) (replSyn f l y as)
 >           replSyn f l (RAppImp _ _ x fn a) as
 >                 = RAppImp f l x (replSyn f l fn as) (replSyn f l a as)
+>           replSyn f l (RBind n b t) as
+>                 = RBind n (replBind f l b as) 
+>                           (replSyn f l t (filter (\ (x,_) -> x /= n) as))
 >           replSyn _ _ x _ = x
+
+>           replBind f l (Pi p os t) as = Pi p os (replSyn f l t as)
+>           replBind f l (Lam t) as = Lam (replSyn f l t as)
+>           replBind f l (RLet v t) as = RLet (replSyn f l v as) (replSyn f l t as)
 
 >           fixes fix@(RUserInfix _ _ _ _ _ _) =
 >               case fixFix uo fix of
@@ -1073,6 +1084,15 @@ allowing recursion in them).
 >           fixesd (DoBinding f l n x y) = DoBinding f l n (fixes x) (fixes y)
 >           fixesd (DoLet f l n x y) = DoLet f l n (fixes x) (fixes y)
 >           fixesd (DoExp f l x) = DoExp f l (fixes x)
+
+>           shiftimpl x = let (imps, t) = simp [] x in
+>                         pibind Im (reverse imps) t
+>           simp imps (RBind n (Pi Im _ t) sc) 
+>                 = simp ((n,t):imps) sc
+>           simp imps (RBind n (Pi p o t) sc) 
+>                 = let (imps', sc') = simp imps sc in
+>                       (imps', RBind n (Pi p o t) sc')
+>           simp imps x = (imps, x)
 
 > syntaxClause :: Ctxt IvorFun -> Implicit -> UserOps -> RawClause ->
 >                 RawClause
@@ -1266,6 +1286,7 @@ Now built-in operators
 >                                          (RLet (unI val []) (unI ty [])) 
 >                                          (unI sc [])) args
 >     unI Star [] = RConst "[val]" 0 TYPE
+>     unI LinStar [] = RConst "[val]" 0 LTYPE
 >     unI (Constant c) [] = let try f = fmap (RConst "[val]" 0 . f) $ cast c
 >                           in  fromJust $ msum [try Num, try Str, try Ch, try Fl]
 >     unI (Annotation _ x) args = unI x args

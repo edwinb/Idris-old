@@ -86,6 +86,7 @@ import Debug.Trace
       ptrtype         { TokenPtrType }
       locktype        { TokenLockType }
       type            { TokenType }
+      ltype           { TokenLType }
       lazybracket     { TokenLazyBracket }
       data            { TokenDataType }
       codata          { TokenCoDataType }
@@ -171,7 +172,7 @@ import Debug.Trace
 %right IMP
 %nonassoc CONST
 -- All the things I don't want to cause a reduction inside a lam...
-%nonassoc name inttype chartype floattype stringtype int char string float bool refl do type
+%nonassoc name inttype chartype floattype stringtype int char string float bool refl do type ltype
           empty unit '_' ptrtype handletype locktype metavar NONE brackname lazy
           oid '~' lpair PAIR return transarrow exists proof
 %left APP
@@ -358,7 +359,7 @@ SimpleAppTerm : SimpleAppTerm File Line NoAppTerm  %prec APP { RApp $2 $3 $1 $4 
 
 Term :: { RawTerm }
 Term : NoAppTerm { $1 }
-     | hashbrack TypeTerm ')' { $2 }
+     | hashbrack Type ')' { $2 }
      | Term File Line NoAppTerm  %prec APP { RApp $2 $3 $1 $4 }
      | Term ImplicitTerm '}' File Line %prec APP 
                    { RAppImp $4 $5 (fst $2) $1 (snd $2) }
@@ -595,6 +596,7 @@ DoBind : Name MaybeType leftarrow Term File Line ';' { DoBinding $5 $6 $1 $2 $4 
 
 Constant :: { Constant }
 Constant : type { TYPE }
+         | ltype { LTYPE }
          | stringtype { StringType }
          | inttype { IntType }
          | chartype { CharType }

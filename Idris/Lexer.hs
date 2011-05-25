@@ -85,6 +85,7 @@ data Token
       | TokenWhere
       | TokenWith
       | TokenType
+      | TokenLType
       | TokenLazyBracket
       | TokenOB
       | TokenCB
@@ -302,6 +303,7 @@ lexVar cont cs =
       ("exists",rest) -> cont TokenExists rest
 -- Types
       ("Set",rest) -> cont TokenType rest
+      ("LSet",rest) -> cont TokenLType rest
       ("Int",rest) -> cont TokenIntType rest
       ("Char",rest) -> cont TokenCharType rest
       ("Float",rest) -> cont TokenFloatType rest
