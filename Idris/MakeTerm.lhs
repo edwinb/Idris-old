@@ -42,14 +42,14 @@ attached).
 >               = let lhs' = addPlaceholders ectx using uo lhs in
 >                     case (getFn lhs', getRawArgs lhs') of
 >                          (fid, pats) ->
->                            let vpats = map (toIvor uo ui n) pats
+>                            let vpats = map (toIvor ctxt using uo ui n) pats
 >                                vrhs = makeIvorTerm using ui uo n ectx rhs in
 >                                PClause vpats [] vrhs
 >         mkPat ectx imp (id,(RawWithClause lhs prf scr def))
 >               = let lhs' = addPlaceholders ectx using uo lhs in
 >                     case (getFn lhs', getRawArgs lhs') of
 >                          (fid, pats) ->
->                            let vpats = map (toIvor uo ui n) pats
+>                            let vpats = map (toIvor ctxt using uo ui n) pats
 >                                vscr = makeIvorTerm using ui uo n ectx scr
 >                                vdef = Patterns $ map (mkPat ectx imp) (zip (repeat id) def) in
 >                                PWithClause prf vpats vscr vdef

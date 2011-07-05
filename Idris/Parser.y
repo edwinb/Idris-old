@@ -174,7 +174,7 @@ import Debug.Trace
 %right IMP
 %nonassoc CONST
 -- All the things I don't want to cause a reduction inside a lam...
-%nonassoc name inttype chartype floattype stringtype int char string float bool refl do type ltype
+%nonassoc name inttype chartype floattype stringtype int char string float bool refl do dsl type ltype
           empty unit '_' ptrtype handletype locktype metavar NONE brackname lazy
           oid '~' lpair PAIR return transarrow exists proof
 %left APP
@@ -559,6 +559,7 @@ NoAppTerm : Name File Line { RVar $2 $3 $1 Unknown }
           | unit File Line { RVar $2 $3 (UN "__Unit") TypeCon }
           | '_' { RPlaceholder }
           | DoBlock { RDo $1 }
+          | DSLBlock { $1 }
           | oid Term cid { RIdiom $2 }
           | '(' TermList ')' File Line { pairDesugar $4 $5 (RVar $4 $5 (UN "mkPair") DataCon) $2 }
 --          | '[' TermList ']' File Line { pairDesugar $4 $5 (RVar $4 $5 (UN "Exists")) $2 }
@@ -583,6 +584,14 @@ TermListZ :: { [RawTerm] }
          | Term { [$1] }
          | Term ',' TermListZ { $1:$3 }
 
+DSLBlock :: { RawTerm }
+DSLBlock : dsl '(' Overloads ')' NoAppTerm 
+             { let (b,r,p,a,v,l) = $3 in
+                   RDSLdef b r p a v l $5 }
+
+Overloads :: { (Maybe Id, Maybe Id, Maybe Id, Maybe Id, Maybe Id, Maybe Id) }
+Overloads : Name ',' Name { (Just $1, Just $3, Nothing, Nothing, Nothing, Nothing) }
+          | Name ',' Name ',' Name ',' Name { (Just $1, Just $3, Nothing, Nothing, Just $5, Just $7) }
 
 DoBlock :: { [Do] }
 DoBlock : do '{' DoBindings '}' { $3 }

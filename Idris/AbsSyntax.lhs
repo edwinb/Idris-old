@@ -261,6 +261,10 @@ Raw terms, as written by the programmer with no implicit arguments added.
 >              | RIdiom RawTerm
 >              | RPure RawTerm -- a term to apply normally inside idiom brackets
 >              | RRefl
+>              | RDSLdef (Maybe Id) (Maybe Id) 
+>                        (Maybe Id) (Maybe Id)
+>                        (Maybe Id) (Maybe Id)
+>                        RawTerm
 >              | RError String Int String -- Hackety. Found an error in processing, report when you can.
 >    deriving (Show, Eq)
 
@@ -895,75 +899,97 @@ scripts
 >            def' <- mapM imc def
 >            return (RawWithClause lhs' prf scr' def')
 
-> toIvor :: UserOps -> UndoInfo -> Id -> RawTerm -> ViewTerm
-> toIvor uo ui fname tm = evalState (toIvorS tm) (0,1)
+> toIvor :: Ctxt IvorFun -> Implicit -> UserOps -> UndoInfo -> Id -> 
+>           RawTerm -> ViewTerm
+> toIvor ctxt using uo ui fname tm = evalState (toIvorS ui tm) (0,1)
 >   where
->     toIvorS :: RawTerm -> State (Int, Int) ViewTerm
->     toIvorS (RVar f l n ty) = return $ Annotation (FileLoc f l) (Name ty (toIvorName n))
->     toIvorS (RVars f l ns) = return $ Annotation (FileLoc f l) (Overloaded (map toIvorName ns))
->     toIvorS ap@(RApp file line f a)
->            = do f' <- toIvorS f
->                 a' <- toIvorS a
+>     toIvorS :: UndoInfo -> RawTerm -> State (Int, Int) ViewTerm
+>     toIvorS ui (RVar f l n ty) = return $ Annotation (FileLoc f l) (Name ty (toIvorName n))
+>     toIvorS ui (RVars f l ns) = return $ Annotation (FileLoc f l) (Overloaded (map toIvorName ns))
+>     toIvorS ui ap@(RApp file line f a)
+>            = do f' <- toIvorS ui f
+>                 a' <- toIvorS ui a
 >                 return (Annotation (FileLoc file line) (App f' a'))
->     toIvorS (RBind (MN "X" 0) (Pi _ _ ty) sc) 
->            = do ty' <- toIvorS ty
->                 sc' <- toIvorS sc
+>     toIvorS ui (RBind (MN "X" 0) (Pi _ _ ty) sc) 
+>            = do ty' <- toIvorS ui ty
+>                 sc' <- toIvorS ui sc
 >                 (i, x) <- get
 >                 put (i+1, x)
 >                 return $ Forall (toIvorName (MN "X" i)) ty' sc'
->     toIvorS (RBind n (Pi _ _ ty) sc) 
->            = do ty' <- toIvorS ty
->                 sc' <- toIvorS sc
+>     toIvorS ui (RBind n (Pi _ _ ty) sc) 
+>            = do ty' <- toIvorS ui ty
+>                 sc' <- toIvorS ui sc
 >                 return $ Forall (toIvorName n) ty' sc'
->     toIvorS (RBind n (Lam ty) sc) 
+>     toIvorS ui (RBind n (Lam ty) sc) 
 >        = case (getLamOverload ui, ty) of
 >            (Just (var, vari, lam, lami), RPlaceholder) -> 
 >               do tm <- unlambda var vari lam lami n sc
->                  toIvorS tm
+>                  toIvorS ui tm
 >            (Nothing, _) -> 
->               do ty' <- toIvorS ty
->                  sc' <- toIvorS sc
+>               do ty' <- toIvorS ui ty
+>                  sc' <- toIvorS ui sc
 >                  return $ Lambda (toIvorName n) ty' sc'
->     toIvorS (RBind n (RLet val ty) sc) 
->            = do ty' <- toIvorS ty
->                 val' <- toIvorS val
->                 sc' <- toIvorS sc
+>     toIvorS ui (RBind n (RLet val ty) sc) 
+>            = do ty' <- toIvorS ui ty
+>                 val' <- toIvorS ui val
+>                 sc' <- toIvorS ui sc
 >                 return $ Let (toIvorName n) ty' val' sc'
->     toIvorS (RConst _ _ c) = return $ toIvorConst c
->     toIvorS RPlaceholder = return Placeholder
->     toIvorS (RMetavar (UN "")) -- no name, so make on eup
+>     toIvorS ui (RConst _ _ c) = return $ toIvorConst c
+>     toIvorS ui RPlaceholder = return Placeholder
+>     toIvorS ui (RMetavar (UN "")) -- no name, so make on eup
 >                 = do (i, h) <- get
 >                      put (i, h+1)
 >                      return $ Metavar (toIvorName (mkName fname h))
->     toIvorS (RMetavar n) = return $ Metavar (toIvorName n)
->     toIvorS (RInfix file line JMEq l r) 
->                 = do l' <- toIvorS l
->                      r' <- toIvorS r
+>     toIvorS ui (RMetavar n) = return $ Metavar (toIvorName n)
+>     toIvorS ui (RInfix file line JMEq l r) 
+>                 = do l' <- toIvorS ui l
+>                      r' <- toIvorS ui r
 >                      return $ Annotation (FileLoc file line) 
 >                                 (apply (Name Unknown (opFn JMEq)) 
 >                                 [Placeholder, Placeholder,l',r'])
->     toIvorS (RInfix file line OpEq l r) 
->                 = do l' <- toIvorS l
->                      r' <- toIvorS r
+>     toIvorS ui (RInfix file line OpEq l r) 
+>                 = do l' <- toIvorS ui l
+>                      r' <- toIvorS ui r
 >                      return $ Annotation (FileLoc file line)
 >                                 (apply (Name Unknown (opFn OpEq))
 >                                 [Placeholder,l',r'])
->     toIvorS (RInfix file line op l r) 
->                 = do l' <- toIvorS l
->                      r' <- toIvorS r
+>     toIvorS ui (RInfix file line op l r) 
+>                 = do l' <- toIvorS ui l
+>                      r' <- toIvorS ui r
 >                      return $ Annotation (FileLoc file line)
 >                               (apply (Name Unknown (opFn op)) [l',r'])
->     toIvorS (RDo dos) = do tm <- undo ui dos
->                            toIvorS tm
->     toIvorS (RReturn f l)
+>     toIvorS ui (RDo dos) = do tm <- undo ui dos
+>                               toIvorS ui tm
+>     toIvorS ui (RReturn f l)
 >       = do let (UI _ _ ret retImpl _ _ _ _ _ _ _ _) = ui
->            toIvorS $ mkApp f l (RVar f l ret Unknown) (take retImpl (repeat RPlaceholder))
->     toIvorS (RIdiom tm) = do let tm' = unidiom ui tm
->                              toIvorS tm'
->     toIvorS (RPure t) = toIvorS t
->     toIvorS RRefl = return $ apply (Name Unknown (name "refl")) [Placeholder]
->     toIvorS (RError f l x) = error (f ++ ":" ++ show l ++ ":" ++ x)
->     toIvorS x = error ("Can't happen, toIvorS: " ++ show x)
+>            toIvorS ui $ mkApp f l (RVar f l ret Unknown) (take retImpl (repeat RPlaceholder))
+>     toIvorS ui (RIdiom tm) = do let tm' = unidiom ui tm
+>                                 toIvorS ui tm'
+>     toIvorS ui (RPure t) = toIvorS ui t
+>     toIvorS ui RRefl = return $ apply (Name Unknown (name "refl")) [Placeholder]
+>     toIvorS ui (RError f l x) = error (f ++ ":" ++ show l ++ ":" ++ x)
+>     toIvorS ui (RDSLdef b r p a v l tm) = toIvorS (update ui b r p a v l) tm
+>     toIvorS ui x = error ("Can't happen, toIvorS: " ++ show x)
+
+>     update (UI b bi r ri p pi a ai v vi l li)
+>            bind ret pure ap var lam =
+>         let (b', bi') = new bind b bi
+>             (r', ri') = new ret r ri
+>             (p', pi') = new pure p pi
+>             (a', ai') = new ap a ai
+>             (v', vi') = newM var v vi
+>             (l', li') = newM lam l li in
+>         (UI b' bi' r' ri' p' pi' a' ai' v' vi' l' li')
+
+>     new Nothing x xi = (x, xi)
+>     new (Just n) _ _ = case ctxtLookupName ctxt (thisNamespace using) n of
+>                          Right (i, nfull) -> (nfull, implicitArgs i)
+>                          Left err -> error (show err)
+
+>     newM Nothing x xi = (x, xi)
+>     newM (Just n) _ _ = case ctxtLookupName ctxt (thisNamespace using) n of
+>                           Right (i, nfull) -> (Just nfull, implicitArgs i)
+>                           Left err -> error (show err)
 
 >     mkName (UN n) i = UN (n++"_"++show i)
 >     mkName (MN n j) i = MN (n++"_"++show i) j
@@ -992,7 +1018,7 @@ Convert a raw term to an ivor term, adding placeholders
 > makeIvorTerm :: Implicit -> UndoInfo -> UserOps -> Id -> Ctxt IvorFun -> RawTerm -> ViewTerm
 > makeIvorTerm using ui uo n ctxt tm 
 >                  = let expraw = addPlaceholders ctxt using uo tm in
->                                 toIvor uo ui n expraw
+>                                 toIvor ctxt using uo ui n expraw
 
 Apply syntax macros, and fixity declarations. 
 Assume they are terminating (perhaps check this by not
@@ -1021,6 +1047,7 @@ allowing recursion in them).
 >               = RUserInfix file line b op (syn l) (syn r)
 >               -- = RUserInfix f l b op (syn x) (syn y)
 >           syn (RDo ds) = RDo $ map synd ds
+>           syn (RDSLdef b r p a v l d) = RDSLdef b r p a v l (syn d)
 >           syn (RIdiom t) = RIdiom (syn t)
 >           syn (RPure t) = RPure (syn t)
 >           syn t = t
@@ -1072,6 +1099,8 @@ allowing recursion in them).
 >           replSyn f l (RBind n b t) as
 >                 = RBind n (replBind f l b as) 
 >                           (replSyn f l t (filter (\ (x,_) -> x /= n) as))
+>           replSyn f l (RDSLdef b r p a v lam d) as
+>                 = RDSLdef b r p a v lam (replSyn f l d as)
 >           replSyn _ _ x _ = x
 
 >           replBind f l (Pi p os t) as = Pi p os (replSyn f l t as)
@@ -1172,6 +1201,7 @@ FIXME: I think this'll fail if names are shadowed.
 >                              (RApp file line (RVar file line (useropFn op) Free) l) r)
 >                 --  (RError f l x) -> RError f l x
 >           ap ex (RDo ds) = RDo (map apdo ds)
+>           ap ex (RDSLdef b r p a v l d) = RDSLdef b r p a v l (ap [] d)
 >           ap ex (RIdiom tm) = RIdiom (ap [] tm)
 >           ap ex (RPure tm) = RPure (ap [] tm)
 >           ap ex r = r
@@ -1239,6 +1269,7 @@ in our list of explicit names to add, add it.
 >     unl (RInfix f l op x y) i = RInfix f l op (unl x i) (unl y i)
 >     unl (RUserInfix f l b op x y) i = RUserInfix f l b op (unl x i) (unl y i)
 >     unl (RDo ds) i = RDo (map (unldo i) ds)
+>     unl (RDSLdef b r p a v l d) i = RDSLdef b r p a v l (unl d i)
 >     unl (RIdiom t) i = RIdiom (unl t i)
 >     unl (RPure t) i = RPure (unl t i)
 >     unl x i = x
