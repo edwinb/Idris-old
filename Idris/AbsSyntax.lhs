@@ -1263,7 +1263,9 @@ in our list of explicit names to add, add it.
 >         | otherwise = tm
 >     unl (RApp f l fn arg) i = RApp f l (unl fn i) (unl arg i)
 >     unl (RAppImp f l n fn arg) i = RAppImp f l n (unl fn i) (unl arg i)
->     unl (RBind n (Lam ty) sc) i = RBind n (Lam ty) (unl sc (i+1))
+>     unl tm@(RBind n (Lam ty) sc) i 
+>         | n == nm = tm
+>         | otherwise = RBind n (Lam ty) (unl sc (i+1))
 >     unl (RBind n (RLet v ty) sc) i = RBind n (RLet (unl v i) ty) (unl sc i)
 >     unl (RBind n b sc) i = RBind n b (unl sc i)
 >     unl (RInfix f l op x y) i = RInfix f l op (unl x i) (unl y i)
