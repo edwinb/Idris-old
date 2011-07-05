@@ -239,6 +239,9 @@ gc_details
 gc_collect
   = mkForeign (FFun "epicGC" Nil FUnit); [%eval]
 
+validFile : File -> Bool;
+validFile (FHandle p) = not (isNull p);
+
 fopen : String -> String -> IO File;
 fopen str mode = do { ho <- _fopen str mode;
 		      return (FHandle ho); };

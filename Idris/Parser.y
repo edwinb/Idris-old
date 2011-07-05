@@ -95,6 +95,7 @@ import Debug.Trace
       infixr          { TokenInfixR }
       using           { TokenUsing }
       idiom           { TokenIdiom }
+      dsl             { TokenDSL }
       params          { TokenParams }
       namespace       { TokenNamespace }
       public          { TokenPublic }
@@ -106,6 +107,7 @@ import Debug.Trace
       with            { TokenWith }
       partial         { TokenPartial }
       syntax          { TokenSyntax }
+      hide            { TokenHide }
       lazy            { TokenLazy }
       static          { TokenStatic }
       refl            { TokenRefl }
@@ -204,10 +206,13 @@ Declaration: Function { $1 }
            | Using '{' Program '}' { PUsing $1 $3 }
            | DoUsing '{' Program '}' { PDoUsing $1 $3 } 
            | Idiom '{' Program '}' { PIdiom $1 $3 }
+           | DSL '{' Program '}' { PDSL $1 $3 }
            | Params '{' Program '}' { PParams $1 $3 }
            | Namespace '{' Program '}' { PNamespace $1 $3 }
            | Transform { RealDecl $1 }
            | syntax Name NamesS '=' Term ';' { RealDecl (SynDef $2 $3 $5) }
+           | hide Name File Line ';'
+                 { RealDecl (SynDef $2 [] (RVar $3 $4 (mkhidden $2) Unknown)) }
            | cinclude string { RealDecl (CInclude $2) }
            | clib string { RealDecl (CLib $2) }
 
@@ -632,6 +637,8 @@ DoUsing ::{ (Id,Id) }
 Idiom ::{ (Id,Id) }
         : idiom '(' Name ',' Name ')' { ($3,$5) }
 
+DSL :: { (Id, Id) }
+       : dsl '(' Name ',' Name ')' { ($3, $5) }
         
 Params :: { [(Id, RawTerm)] }
        : params '(' UseList ')' { $3 }
@@ -823,6 +830,8 @@ mkConsList :: String -> Int -> [RawTerm] -> RawTerm
 mkConsList f l [] = RVar f l (UN "Nil") Unknown
 mkConsList f l (x:xs) = RApp f l (RApp f l (RVar f l (UN "Cons") Unknown) x)
                                  (mkConsList f l xs)
+
+mkhidden (UN n) = MN (n++" is hidden") 0
 
 }
 

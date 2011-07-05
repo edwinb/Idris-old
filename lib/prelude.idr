@@ -10,7 +10,7 @@ malloc bytes val = val;
 -- using this are not to be trusted! (Or maybe use externally trusted code)
 -- Generate a refl so that __eq_repl can reduce.
 
-__Suspend_Disbelief : (m:A) -> (n:A) -> (n = m);
+__Suspend_Disbelief : {A:Set} -> (m:A) -> (n:A) -> (n = m);
 __Suspend_Disbelief m n = __Prove_Anything _ _ (refl n);
 
 flip : (a -> b -> c) -> b -> a -> c;

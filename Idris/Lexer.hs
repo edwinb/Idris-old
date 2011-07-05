@@ -76,6 +76,7 @@ data Token
       | TokenParams
       | TokenUsing
       | TokenIdiom
+      | TokenDSL
       | TokenNoElim
       | TokenCollapsible
       | TokenPartial
@@ -182,6 +183,7 @@ data Token
       | TokenTransform
       | TokenCInclude
       | TokenCLib
+      | TokenHide
       | TokenEOF
  deriving (Show, Eq)
 
@@ -280,6 +282,7 @@ lexVar cont cs =
       ("codata",rest) -> cont TokenCoDataType rest
       ("using",rest) -> cont TokenUsing rest
       ("idiom",rest) -> cont TokenIdiom rest
+      ("dsl",rest) -> cont TokenDSL rest
       ("params",rest) -> cont TokenParams rest
       ("namespace",rest) -> cont TokenNamespace rest
       ("public",rest) -> cont TokenPublic rest
@@ -371,6 +374,7 @@ lexSpecial cont cs =
       ("transform",rest) -> cont TokenTransform rest
       ("include",rest) -> cont TokenCInclude rest
       ("lib",rest) -> cont TokenCLib rest
+      ("hide",rest) -> cont TokenHide rest
 -- tactics
 -- FIXME: it'd be better to have a 'theorem proving' state so that these
 -- don't need the ugly syntax...

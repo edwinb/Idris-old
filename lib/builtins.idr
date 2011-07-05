@@ -17,8 +17,8 @@ data Pair a b = mkPair a b;
 id : a -> a;
 id x = x;
 
-rewrite : {A:B->Set} -> A m -> (m=n) -> A n;
-rewrite t (refl m) = t;
+rewrite : {B:Set} -> {A:B->Set} -> A m -> (m=n) -> A n;
+rewrite {B} t (refl m) = t;
 
 -- This way is needed for Ivor's rewriting tactic
 

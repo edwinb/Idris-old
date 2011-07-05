@@ -16,7 +16,7 @@ data Vn : Set -> Set where
   mkV : (Vect A n) -> (Vn A);
 
 vfilter : (f:A -> Bool) -> (Vect A n) -> (Vn A);
-vfilter f VNil = mkV VNil;
+vfilter {A} f VNil = mkV VNil;
 vfilter f (x :: xs) with (f x) {
       | False = vfilter f xs;
       | True with (vfilter f xs) {

@@ -45,6 +45,7 @@ We store everything directly as a 'ViewTerm' from Ivor.
 >           | Params [(Id, RawTerm)] [Decl] -- default implicit args
 >           | DoUsing Id Id [Decl] -- bind and return names
 >           | Idiom Id Id [Decl] -- pure and ap names
+>           | DSL Id Id [Decl] -- var and lam names
 >           | Namespace Id [Decl] -- bind and return names
 >           | CLib String | CInclude String
 >           | Fixity String Fixity Int
@@ -101,6 +102,7 @@ the system to insert a hole for a proof that turns it into the right type.
 >                | PParams [(Id, RawTerm)] [ParseDecl]
 >                | PDoUsing (Id, Id) [ParseDecl]
 >                | PIdiom (Id, Id) [ParseDecl]
+>                | PDSL (Id, Id) [ParseDecl]
 >                | PNamespace Id [ParseDecl]
 >    deriving Show
 
@@ -148,6 +150,11 @@ the system to insert a hole for a proof that turns it into the right type.
 >                case (cds [] [] pds) of
 >                   Success d ->
 >                       cds ((Idiom up ua d):rds) fwds ds
+>                   failure -> failure
+>         cds rds fwds ((PDSL (up,ua) pds):ds) = 
+>                case (cds [] [] pds) of
+>                   Success d ->
+>                       cds ((DSL up ua d):rds) fwds ds
 >                   failure -> failure
 >         cds rds fwds (d:ds) = fail $ "Invalid declaration: " ++ show d
 >         cds rds fwds [] = return (reverse rds)
@@ -747,11 +754,14 @@ or not)
 > fromIvorName_ i = UN (show i)
 
 For desugaring -- do blocks, idiom brackets and syntax definitions
+FIXME: This is far too big. Do it properly.
 
 > data UndoInfo = UI Id Int -- bind, bind implicit
 >                    Id Int -- return, return implicit
 >                    Id Int -- pure, pure implicit
 >                    Id Int -- ap, ap implicit
+>                    (Maybe Id) Int -- var, var implicit
+>                    (Maybe Id) Int -- lam, lam implicit
 
 > data ModInfo = MI Id -- namespace
 >                   [(Id, RawTerm)] -- parameters
@@ -806,7 +816,7 @@ programmer doesn't have to write them down inside the param block.
 > ioname n = NS [UN "IO"] (UN n)
 > ionamei n = toIvorName (ioname n)
 
-> defDo = UI bindName 2 retName 1 retName 1 applyName 2
+> defDo = UI bindName 2 retName 1 retName 1 applyName 2 Nothing 0 Nothing 0
 
 Give names to unnamed metavariables, and record any associated proof
 scripts
@@ -906,9 +916,14 @@ scripts
 >                 sc' <- toIvorS sc
 >                 return $ Forall (toIvorName n) ty' sc'
 >     toIvorS (RBind n (Lam ty) sc) 
->            = do ty' <- toIvorS ty
->                 sc' <- toIvorS sc
->                 return $ Lambda (toIvorName n) ty' sc'
+>        = case (getLamOverload ui, ty) of
+>            (Just (var, vari, lam, lami), RPlaceholder) -> 
+>               do tm <- unlambda var vari lam lami n sc
+>                  toIvorS tm
+>            (Nothing, _) -> 
+>               do ty' <- toIvorS ty
+>                  sc' <- toIvorS sc
+>                  return $ Lambda (toIvorName n) ty' sc'
 >     toIvorS (RBind n (RLet val ty) sc) 
 >            = do ty' <- toIvorS ty
 >                 val' <- toIvorS val
@@ -941,7 +956,7 @@ scripts
 >     toIvorS (RDo dos) = do tm <- undo ui dos
 >                            toIvorS tm
 >     toIvorS (RReturn f l)
->       = do let (UI _ _ ret retImpl _ _ _ _) = ui
+>       = do let (UI _ _ ret retImpl _ _ _ _ _ _ _ _) = ui
 >            toIvorS $ mkApp f l (RVar f l ret Unknown) (take retImpl (repeat RPlaceholder))
 >     toIvorS (RIdiom tm) = do let tm' = unidiom ui tm
 >                              toIvorS tm'
@@ -952,6 +967,10 @@ scripts
 
 >     mkName (UN n) i = UN (n++"_"++show i)
 >     mkName (MN n j) i = MN (n++"_"++show i) j
+
+>     getLamOverload (UI _ _ _ _ _ _ _ _ (Just var) vi (Just lam) li) =
+>         Just (var, vi, lam, li)
+>     getLamOverload _ = Nothing
 
 > toIvorConst (Num x) = Constant x
 > toIvorConst (Str str) = Constant str
@@ -1182,7 +1201,7 @@ in our list of explicit names to add, add it.
 > undo :: UndoInfo -> [Do] -> State (Int, Int) RawTerm
 > undo ui [] = fail "The last statement in a 'do' block must be an expression"
 > undo ui [DoExp f l last] = return last
-> undo ui@(UI bind bindimpl _ _ _ _ _ _) ((DoBinding file line v' ty exp):ds)
+> undo ui@(UI bind bindimpl _ _ _ _ _ _ _ _ _ _) ((DoBinding file line v' ty exp):ds)
 >          = -- bind exp (\v' . [[ds]])
 >            do ds' <- undo ui ds
 >               let k = RBind v' (Lam ty) ds'
@@ -1191,7 +1210,7 @@ in our list of explicit names to add, add it.
 > undo ui ((DoLet file line v' ty exp):ds)
 >          = do ds' <- undo ui ds
 >               return $ RBind v' (RLet exp ty) ds'
-> undo ui@(UI bind bindimpl _ _ _ _ _ _) ((DoExp file line exp):ds)
+> undo ui@(UI bind bindimpl _ _ _ _ _ _ _ _ _ _) ((DoExp file line exp):ds)
 >          = -- bind exp (\_ . [[ds]])
 >            do ds' <- undo ui ds
 >               (i, h) <- get
@@ -1199,6 +1218,38 @@ in our list of explicit names to add, add it.
 >               let k = RBind (MN "x" i) (Lam RPlaceholder) ds'
 >               return $ mkApp file line (RVar file line bind Unknown) 
 >                          ((take bindimpl (repeat RPlaceholder)) ++ [exp, k])
+
+> unlambda :: Id -> Int -> Id -> Int -> Id -> RawTerm -> 
+>             State (Int, Int) RawTerm
+> unlambda var vi lam li nm sc 
+>     = do let sc' = unl sc 0
+>          return $ mkApp "[lam]" 0 
+>                     (RVar "[lam]" 0 lam Unknown) 
+>                     ((take li (repeat RPlaceholder)) ++ [sc'])
+>   where
+>     unl tm@(RVar f l x ty) i
+>         | x == nm = mkApp f l (RVar f l var Unknown) 
+>                       ((take vi (repeat RPlaceholder)) ++ [intDB f l i])
+>         | otherwise = tm
+>     unl (RApp f l fn arg) i = RApp f l (unl fn i) (unl arg i)
+>     unl (RAppImp f l n fn arg) i = RAppImp f l n (unl fn i) (unl arg i)
+>     unl (RBind n (Lam ty) sc) i = RBind n (Lam ty) (unl sc (i+1))
+>     unl (RBind n (RLet v ty) sc) i = RBind n (RLet (unl v i) ty) (unl sc i)
+>     unl (RBind n b sc) i = RBind n b (unl sc i)
+>     unl (RInfix f l op x y) i = RInfix f l op (unl x i) (unl y i)
+>     unl (RUserInfix f l b op x y) i = RUserInfix f l b op (unl x i) (unl y i)
+>     unl (RDo ds) i = RDo (map (unldo i) ds)
+>     unl (RIdiom t) i = RIdiom (unl t i)
+>     unl (RPure t) i = RPure (unl t i)
+>     unl x i = x
+
+>     unldo i (DoBinding f l n x y) = DoBinding f l n (unl x i) (unl y i)
+>     unldo i (DoLet f l n x y) = DoLet f l n (unl x i) (unl y i)
+>     unldo i (DoExp f l e) = DoExp f l (unl e i)
+
+>     intDB f l 0 = RApp f l (RVar f l (UN "fO") Unknown) RPlaceholder
+>     intDB f l n = RApp f l (RApp f l (RVar f l (UN "fS") Unknown) RPlaceholder)
+>                            (intDB f l (n-1))
 
 -- > unret :: UndoInfo -> RawTerm -> RawTerm
 -- > unret (UI _ _ ret retImpl _ _ _ _) (RApp f l (RVar _ _ (UN "return")) arg)
@@ -1217,17 +1268,17 @@ in our list of explicit names to add, add it.
 TODO: Get names out of UndoInfo
 
 > unidiom :: UndoInfo -> RawTerm -> RawTerm
-> unidiom ui@(UI _ _ _ _ pure pureImpl _ _) (RApp file line f (RPure x)) 
+> unidiom ui@(UI _ _ _ _ pure pureImpl _ _ _ _ _ _) (RApp file line f (RPure x)) 
 >         = mkApp file line (RVar file line pure Unknown)
 >                ((take pureImpl (repeat RPlaceholder)) ++ [mkApp file line f [x]])
-> unidiom ui@(UI _ _ _ _ pure pureImpl _ _) (RApp file line f RPlaceholder) 
+> unidiom ui@(UI _ _ _ _ pure pureImpl _ _ _ _ _ _) (RApp file line f RPlaceholder) 
 >         = mkApp file line (RVar file line pure Unknown)
 >                ((take pureImpl (repeat RPlaceholder)) ++ [mkApp file line f [RPlaceholder]])
-> unidiom ui@(UI _ _ _ _ _ _ ap apImpl) (RApp file line f x) 
+> unidiom ui@(UI _ _ _ _ _ _ ap apImpl _ _ _ _) (RApp file line f x) 
 >              = mkApp file line (RVar file line ap Unknown)
 >                     ((take apImpl (repeat RPlaceholder)) ++
 >                     [unidiom ui f, x])
-> unidiom ui@(UI _ _ _ _ pure pureImpl _ _) x 
+> unidiom ui@(UI _ _ _ _ pure pureImpl _ _ _ _ _ _) x 
 >              = let (file, line) = getFileLine x in
 >               mkApp file line (RVar file line pure Unknown)
 >                     ((take pureImpl (repeat RPlaceholder)) ++ [x])
