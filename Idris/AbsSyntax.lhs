@@ -901,7 +901,8 @@ scripts
 
 > toIvor :: Ctxt IvorFun -> Implicit -> UserOps -> UndoInfo -> Id -> 
 >           RawTerm -> ViewTerm
-> toIvor ctxt using uo ui fname tm = evalState (toIvorS ui tm) (0,1)
+> toIvor ctxt using uo ui fname tm = let t = evalState (toIvorS ui tm) (0,1) in
+>                                    t -- trace (show t) t
 >   where
 >     toIvorS :: UndoInfo -> RawTerm -> State (Int, Int) ViewTerm
 >     toIvorS ui (RVar f l n ty) = return $ Annotation (FileLoc f l) (Name ty (toIvorName n))

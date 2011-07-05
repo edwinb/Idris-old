@@ -79,17 +79,23 @@ using (G:Vect Ty n) {
   interp env (Cdr xs) = tail (interp env xs);
   interp env (Op op l r) = op (interp env l) (interp env r);
    
+  dsl lam {
+      lambda = Lam
+      variable = Var
+      apply = App
+      pure = id
+  }
 
   -- Some test functions:
   -- 1. Add two inputs.
 
   test : Expr G (TyFun TyInt (TyFun TyInt TyInt));
-  test = Lam (Lam (Op (+) (Var (fS fO)) (Var fO)));
+  test = lam (\x => \y => Op (+) x y );
 
   -- 2. Double a value by calling 'test'.
 
   double : Expr G (TyFun TyInt TyInt);
-  double = Lam (App (App test (Var fO)) (Var fO));
+  double = lam (\x => [| test x x |]);
 
   ap : |(f:Expr G (TyFun a t)) -> (Expr G a) -> (Expr G t);
   ap f x = App f x;
@@ -97,9 +103,9 @@ using (G:Vect Ty n) {
   fact' : Expr G (TyFun TyInt TyInt);
 
   fact : Expr G (TyFun TyInt TyInt);
-  fact = Lam (If (Op (==) (Val 0) (Var fO))
-                (Val 1)
-	        (Op (*) (Var fO) (ap fact (Op (-) (Var fO) (Val 1)))));
+  fact = lam (\x => If (Op (==) x (Val 0))
+                       (Val 1)
+                       (Op (*) x [| fact (Op (-) x (Val 1)) |] ));
 
   fact' {G} = fact {G};  
   %freeze fact';
