@@ -76,7 +76,7 @@ attached).
 > mif opt ctxt acc using' ui uo ((Namespace n decls):ds)
 >         = let (acc', uo') = (mif opt ctxt acc (addNS using' n) ui uo decls) in
 >               mif opt ctxt acc' using' ui uo' ds
-> mif opt ctxt acc using ui@(UI _ _ _ _ p pi r ri v vi l li) uo ((DoUsing bind ret decls):ds)
+> mif opt ctxt acc using ui uo ((DoUsing bind ret decls):ds)
 >         = let (acc', uo') = (mif opt ctxt acc using ui' uo decls) in
 >              mif opt ctxt acc' using ui uo' ds
 >    where ui' = let (bimpl, bfull) 
@@ -87,8 +87,9 @@ attached).
 >                       = case ctxtLookupName (appCtxt ctxt acc) (thisNamespace using) ret of
 >                              Right (i, rfull) -> (implicitArgs i, rfull)
 >                              Left err -> error (show err)
->                     in UI bfull bimpl rfull rimpl p pi r ri v vi l li
-> mif opt ctxt acc using ui@(UI b bi r ri _ _ _ _ v vi l li) uo ((Idiom pure ap decls):ds)
+>                     in ui { uibind = (bfull, bimpl),
+>                             uireturn = (rfull, rimpl) }
+> mif opt ctxt acc using ui uo ((Idiom pure ap decls):ds)
 >         = let (acc', uo') = (mif opt ctxt acc using ui' uo decls) in
 >             mif opt ctxt acc' using ui uo' ds
 >    where ui' = let (pureImpl, pfull) 
@@ -99,8 +100,9 @@ attached).
 >                      = case ctxtLookupName (appCtxt ctxt acc) (thisNamespace using) ap of
 >                              Right (i, afull) -> (implicitArgs i, afull)
 >                              Left err -> error (show err)
->                     in UI b bi r ri pfull pureImpl afull apImpl v vi l li
-> mif opt ctxt acc using ui@(UI b bi r ri p pi a ai _ _ _ _) uo ((DSL var lam decls):ds)
+>                     in ui { uipure = (pfull, pureImpl),
+>                             uiapply = (afull, apImpl) }
+> mif opt ctxt acc using ui uo ((DSL var lam decls):ds)
 >         = let (acc', uo') = (mif opt ctxt acc using ui' uo decls) in
 >             mif opt ctxt acc' using ui uo' ds
 >    where ui' = let (varImpl, vfull) 
@@ -111,7 +113,8 @@ attached).
 >                      = case ctxtLookupName (appCtxt ctxt acc) (thisNamespace using) lam of
 >                              Right (i, lfull) -> (implicitArgs i, lfull)
 >                              Left err -> error (show err)
->                     in UI b bi r ri p pi a ai (Just vfull) varImpl (Just lfull) lamImpl
+>                     in ui { uivar = (Just vfull, varImpl),
+>                             uilam = (Just lfull, lamImpl) }
 > mif opt ctxt acc using' ui uo (decl@(Fun f flags):ds) 
 >         = let using = addParamName using' (funId f)
 >               (fn, newdefs) = makeIvorFun using ui uo (appCtxt ctxt acc) decl f flags in

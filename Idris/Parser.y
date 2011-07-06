@@ -212,9 +212,9 @@ Declaration: Function { $1 }
            | Transform { RealDecl $1 }
            | syntax Name NamesS '=' Term ';' { RealDecl (SynDef $2 $3 $5) }
            | dsl Name File Line '{' Overloads '}'
-             { let (b,r,p,a,v,l) = $6 in
+             { let (b,r,p,a,v,l,lt) = $6 in
                    RealDecl (SynDef $2 [UN "x"] 
-                           (RDSLdef b r p a v l (RVar $3 $4 (UN "x") Unknown)))
+                           (RDSLdef b r p a v l lt (RVar $3 $4 (UN "x") Unknown)))
              }
            | hide Name File Line ';'
                  { RealDecl (SynDef $2 [] (RVar $3 $4 (mkhidden $2) Unknown)) }
@@ -591,10 +591,11 @@ TermListZ :: { [RawTerm] }
 
 DSLBlock :: { RawTerm }
 DSLBlock : dsl '(' Overloads ')' NoAppTerm 
-             { let (b,r,p,a,v,l) = $3 in
-                   RDSLdef b r p a v l $5 }
+             { let (b,r,p,a,v,l,lt) = $3 in
+                   RDSLdef b r p a v l lt $5 }
 
-Overloads :: { (Maybe Id, Maybe Id, Maybe Id, Maybe Id, Maybe Id, Maybe Id) }
+Overloads :: { (Maybe Id, Maybe Id, Maybe Id, Maybe Id, 
+                Maybe Id, Maybe Id, Maybe Id) }
 Overloads -- : Name ',' Name { (Just $1, Just $3, Nothing, Nothing, Nothing, Nothing) }
           -- | Name ',' Name ',' Name ',' Name { (Just $1, Just $3, Nothing, Nothing, Just $5, Just $7) }
           : OList { (lookup (UN "bind") $1,
@@ -602,7 +603,8 @@ Overloads -- : Name ',' Name { (Just $1, Just $3, Nothing, Nothing, Nothing, Not
                      lookup (UN "pure") $1,
                      lookup (UN "apply") $1,
                      lookup (UN "variable") $1,
-                     lookup (UN "lambda") $1) }
+                     lookup (UN "lambda") $1,
+                     lookup (UN "let") $1) }
 
 OList :: { [(Id, Id)] }
 OList : Obind { [$1] }
@@ -613,6 +615,7 @@ OList : Obind { [$1] }
 Obind :: { (Id, Id) }
 Obind : Name '=' Name { ($1, $3) }
       | return '=' Name { (UN "return", $3) }
+      | let '=' Name { (UN "let", $3) }
 
 DoBlock :: { [Do] }
 DoBlock : do '{' DoBindings '}' { $3 }
