@@ -1302,6 +1302,7 @@ in our list of explicit names to add, add it.
 >                     ((take li (repeat RPlaceholder)) ++ [sc'])
 >   where
 >     unl tm@(RVar f l x ty) i
+>         | var == UN "id" && x == nm = intDB f l i fz fs
 >         | x == nm = mkApp f l (RVar f l var Unknown) 
 >                       ((take vi (repeat RPlaceholder)) ++ [intDB f l i fz fs])
 >         | otherwise = tm
@@ -1343,6 +1344,7 @@ in our list of explicit names to add, add it.
 >                     ((take li (repeat RPlaceholder)) ++ [val, sc'])
 >   where
 >     unl tm@(RVar f l x ty) i
+>         | var == UN "id" && x == nm = intDB f l i fz fs
 >         | x == nm = mkApp f l (RVar f l var Unknown) 
 >                       ((take vi (repeat RPlaceholder)) ++ [intDB f l i fz fs])
 >         | otherwise = tm

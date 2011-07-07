@@ -138,7 +138,7 @@ strSpan' : (Char -> Bool) -> String -> String -> (String & String);
 strSpan' p str acc with strM str {
   strSpan' p "" acc | StrNil 
          = (strRev acc, "");
-  strSpan' p (strCons c cs) acc | StrCons _ _
+  strSpan' p (strCons c cs) acc | StrCons c cs
          = if (p c) then (strSpan' p cs (strCons c acc))
     	      	    else (strRev acc, (strCons c cs));
 }
@@ -235,7 +235,7 @@ trim x = trimLeft (strRev (trimLeft (strRev x)));
 mapStr : (Char -> Char) -> String -> String;
 mapStr f str with strM str {
  mapStr f ""             | StrNil      = "";
- mapStr f (strCons c cs) | StrCons _ _ = strCons (f c) (mapStr f cs);
+ mapStr f (strCons c cs) | StrCons c cs = strCons (f c) (mapStr f cs);
 }
 
 toLower : Char -> Char;

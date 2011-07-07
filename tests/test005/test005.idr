@@ -121,13 +121,13 @@ nwLemma proof {
 
 numPad : (Number n l) -> (Number (plus k n) l);
 numPad {k=O} num = num;
-numPad {k=S j} num = numWeaken (numPad num);
+numPad {k=S j} num = numWeaken (numPad {k=j} num);
 
 numPadR : (Number n l) -> (Number (plus n k) l);
 numPadR proof {
         %intro k, l, n, num;
         %rewrite plus_comm k n;
-        %fill numPad num;
+        %fill numPad {k} num;
         %qed;
 };
 
@@ -244,8 +244,9 @@ bitUnique _O_ _O_ = refl _;
 
 numUnique : (x: Number n v) -> (y : Number n v) -> (x=y);
 numUnique none none = refl _;
-numUnique (bit b1 v1) (bit b2 v2) = let rec = numUnique v1 v2 in
-					?proveBitsUnique;
+numUnique {n=S n} (bit b1 v1) (bit b2 v2) 
+    = let rec = numUnique v1 v2 in
+          ?proveBitsUnique;
 
 proveBitsUnique proof {
         %intro;

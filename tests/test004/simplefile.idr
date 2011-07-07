@@ -243,8 +243,9 @@ interp env (FOREACH xs p) =
 interp env (IF v thenp elsep) =
      ibinda (if v then (ioSnd (interp env thenp)) else (ioSnd (interp env elsep)))
             (\k => return (env, k));
-interp env (FORGET p) = do { runp <- interp env p;
-		             return (dropLast runp); }; 
+interp {T=t} env (FORGET {t} p)
+                      = do { runp <- interp {T=t} env p;
+		             return (dropLast {t} runp); }; 
 interp env (CALL p) = ibinda (runInterp (interp Empty p))
 		             (\callp => return (env, callp));
 interp env (BIND code k) = bind (interp env code)

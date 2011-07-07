@@ -56,7 +56,7 @@ weaken (fS k) = fS (weaken k);
 
 nweaken : {k:Nat} -> (Fin n) -> (Fin (plus k n));
 nweaken {k=O} x = x;
-nweaken {k=S n} x = weaken (nweaken x);
+nweaken {k=S n} x = weaken (nweaken {k=n} x);
 
 updateIDlater proof {
 	%intro;
