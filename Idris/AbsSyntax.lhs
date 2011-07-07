@@ -261,12 +261,19 @@ Raw terms, as written by the programmer with no implicit arguments added.
 >              | RIdiom RawTerm
 >              | RPure RawTerm -- a term to apply normally inside idiom brackets
 >              | RRefl
->              | RDSLdef (Maybe Id) (Maybe Id) 
->                        (Maybe Id) (Maybe Id)
->                        (Maybe Id) (Maybe Id)
->                        (Maybe Id) -- do this properly!
->                        RawTerm
+>              | RDSLdef DSLdef RawTerm
 >              | RError String Int String -- Hackety. Found an error in processing, report when you can.
+>    deriving (Show, Eq)
+
+> data DSLdef = DSLdef { dsl_bind :: Maybe Id,
+>                        dsl_return :: Maybe Id,
+>                        dsl_pure :: Maybe Id,
+>                        dsl_apply :: Maybe Id,
+>                        dsl_variable :: Maybe Id,
+>                        dsl_lambda :: Maybe Id,
+>                        dsl_let :: Maybe Id,
+>                        dsl_zero :: Maybe Id,
+>                        dsl_succ :: Maybe Id }
 >    deriving (Show, Eq)
 
 > data RBinder = Pi Plicit [ArgOpt] RawTerm
@@ -770,7 +777,9 @@ names, then there's no need for the implicit bit.
 >                      uiapply :: (Id, Int),
 >                      uivar :: (Maybe Id, Int),
 >                      uilam :: (Maybe Id, Int),
->                      uilet :: (Maybe Id, Int)
+>                      uilet :: (Maybe Id, Int),
+>                      uizero :: (Id, Int),
+>                      uisucc :: (Id, Int)
 >                    }
 
 > data ModInfo = MI Id -- namespace
@@ -814,6 +823,8 @@ programmer doesn't have to write them down inside the param block.
 > iodoName = ioname "IODo"
 > ioliftName = ioname "IOLift"
 > applyName = ioname "apply"
+> fzName = UN "fO"
+> fsName = UN "fS"
 
 > bindNamei = toIvorName bindName
 > ibindNamei = toIvorName ibindName
@@ -828,6 +839,7 @@ programmer doesn't have to write them down inside the param block.
 
 > defDo = UI (bindName, 2) (retName, 1) (retName, 1) (applyName, 2) 
 >            (Nothing, 0) (Nothing, 0) (Nothing, 0)
+>            (fzName, 1)  (fsName, 1)
 
 Give names to unnamed metavariables, and record any associated proof
 scripts
@@ -909,7 +921,7 @@ scripts
 > toIvor :: Ctxt IvorFun -> Implicit -> UserOps -> UndoInfo -> Id -> 
 >           RawTerm -> ViewTerm
 > toIvor ctxt using uo ui fname tm = let t = evalState (toIvorS ui tm) (0,1) in
->                                    t
+>                                    t -- trace (show t) t
 >   where
 >     toIvorS :: UndoInfo -> RawTerm -> State (Int, Int) ViewTerm
 >     toIvorS ui (RVar f l n ty) = return $ Annotation (FileLoc f l) (Name ty (toIvorName n))
@@ -931,7 +943,7 @@ scripts
 >     toIvorS ui (RBind n (Lam ty) sc) 
 >        = case (getLamOverload ui, ty) of
 >            (Just (var, vari, lam, lami), RPlaceholder) -> 
->               do tm <- unlambda var vari lam lami n sc (existlet ui)
+>               do tm <- unlambda var vari lam lami n sc (existlet ui) (uizero ui) (uisucc ui)
 >                  toIvorS ui tm
 >            (Nothing, _) -> 
 >               do ty' <- toIvorS ui ty
@@ -940,7 +952,7 @@ scripts
 >     toIvorS ui (RBind n (RLet val ty) sc) 
 >        = case (getLetOverload ui, ty) of
 >            (Just (var, vari, lam, lami), RPlaceholder) -> 
->               do tm <- unlet var vari lam lami n val sc (existlam ui)
+>               do tm <- unlet var vari lam lami n val sc (existlam ui) (uizero ui) (uisucc ui)
 >                  toIvorS ui tm
 >            (Nothing, _) ->
 >               do ty' <- toIvorS ui ty
@@ -981,19 +993,22 @@ scripts
 >     toIvorS ui (RPure t) = toIvorS ui t
 >     toIvorS ui RRefl = return $ apply (Name Unknown (name "refl")) [Placeholder]
 >     toIvorS ui (RError f l x) = error (f ++ ":" ++ show l ++ ":" ++ x)
->     toIvorS ui (RDSLdef b r p a v l lt tm) = toIvorS (update ui b r p a v l lt) tm
+>     toIvorS ui (RDSLdef (DSLdef b r p a v l lt z s) tm) = toIvorS (update ui b r p a v l lt z s) tm
 >     toIvorS ui x = error ("Can't happen, toIvorS: " ++ show x)
 
->     update (UI (b, bi) (r, ri) (p, pi) (a, ai) (v, vi) (l, li) (lt, lti))
->            bind ret pure ap var lam letb =
+>     update (UI (b, bi) (r, ri) (p, pi) (a, ai) (v, vi) (l, li) (lt, lti)
+>                (z, zi) (s, si))
+>            bind ret pure ap var lam letb zero succ =
 >         let b' = new bind b bi
 >             r' = new ret r ri
 >             p' = new pure p pi
 >             a' = new ap a ai
+>             z' = new zero z zi
+>             s' = new succ s si
 >             v' = newM var v vi
 >             l' = newM lam l li 
 >             lt' = newM letb lt lti in
->         (UI b' r' p' a' v' l' lt')
+>         (UI b' r' p' a' v' l' lt' z' s')
 
 >     new Nothing x xi = (x, xi)
 >     new (Just n) _ _ = case ctxtLookupName ctxt (thisNamespace using) n of
@@ -1073,7 +1088,7 @@ allowing recursion in them).
 >               = RUserInfix file line b op (syn l) (syn r)
 >               -- = RUserInfix f l b op (syn x) (syn y)
 >           syn (RDo ds) = RDo $ map synd ds
->           syn (RDSLdef b r p a v l lt d) = RDSLdef b r p a v l lt (syn d)
+>           syn (RDSLdef f d) = RDSLdef f (syn d)
 >           syn (RIdiom t) = RIdiom (syn t)
 >           syn (RPure t) = RPure (syn t)
 >           syn t = t
@@ -1125,8 +1140,8 @@ allowing recursion in them).
 >           replSyn f l (RBind n b t) as
 >                 = RBind n (replBind f l b as) 
 >                           (replSyn f l t (filter (\ (x,_) -> x /= n) as))
->           replSyn f l (RDSLdef b r p a v lam lt d) as
->                 = RDSLdef b r p a v lam lt (replSyn f l d as)
+>           replSyn f l (RDSLdef fn d) as
+>                 = RDSLdef fn (replSyn f l d as)
 >           replSyn _ _ x _ = x
 
 >           replBind f l (Pi p os t) as = Pi p os (replSyn f l t as)
@@ -1227,7 +1242,7 @@ FIXME: I think this'll fail if names are shadowed.
 >                              (RApp file line (RVar file line (useropFn op) Free) l) r)
 >                 --  (RError f l x) -> RError f l x
 >           ap ex (RDo ds) = RDo (map apdo ds)
->           ap ex (RDSLdef b r p a v l lt d) = RDSLdef b r p a v l lt (ap [] d)
+>           ap ex (RDSLdef f d) = RDSLdef f (ap [] d)
 >           ap ex (RIdiom tm) = RIdiom (ap [] tm)
 >           ap ex (RPure tm) = RPure (ap [] tm)
 >           ap ex r = r
@@ -1278,8 +1293,9 @@ in our list of explicit names to add, add it.
 >                          ((take bindimpl (repeat RPlaceholder)) ++ [exp, k])
 
 > unlambda :: Id -> Int -> Id -> Int -> Id -> RawTerm -> Bool ->
+>             (Id, Int) -> (Id, Int) ->
 >             State (Int, Int) RawTerm
-> unlambda var vi lam li nm sc lettoo
+> unlambda var vi lam li nm sc lettoo fz fs
 >     = do let sc' = unl sc 0
 >          return $ mkApp "[lam]" 0 
 >                     (RVar "[lam]" 0 lam Unknown) 
@@ -1287,7 +1303,7 @@ in our list of explicit names to add, add it.
 >   where
 >     unl tm@(RVar f l x ty) i
 >         | x == nm = mkApp f l (RVar f l var Unknown) 
->                       ((take vi (repeat RPlaceholder)) ++ [intDB f l i])
+>                       ((take vi (repeat RPlaceholder)) ++ [intDB f l i fz fs])
 >         | otherwise = tm
 >     unl (RApp f l fn arg) i = RApp f l (unl fn i) (unl arg i)
 >     unl (RAppImp f l n fn arg) i = RAppImp f l n (unl fn i) (unl arg i)
@@ -1301,7 +1317,7 @@ in our list of explicit names to add, add it.
 >     unl (RInfix f l op x y) i = RInfix f l op (unl x i) (unl y i)
 >     unl (RUserInfix f l b op x y) i = RUserInfix f l b op (unl x i) (unl y i)
 >     unl (RDo ds) i = RDo (map (unldo i) ds)
->     unl (RDSLdef b r p a v l lt d) i = RDSLdef b r p a v l lt (unl d i)
+>     unl (RDSLdef f d) i = RDSLdef f (unl d i)
 >     unl (RIdiom t) i = RIdiom (unl t i)
 >     unl (RPure t) i = RPure (unl t i)
 >     unl x i = x
@@ -1310,13 +1326,17 @@ in our list of explicit names to add, add it.
 >     unldo i (DoLet f l n x y) = DoLet f l n (unl x i) (unl y i)
 >     unldo i (DoExp f l e) = DoExp f l (unl e i)
 
->     intDB f l 0 = RApp f l (RVar f l (UN "fO") Unknown) RPlaceholder
->     intDB f l n = RApp f l (RApp f l (RVar f l (UN "fS") Unknown) RPlaceholder)
->                            (intDB f l (n-1))
+> intDB f l 0 (fz, i) fs
+>    = pl_app f l (RVar f l fz Unknown) i []
+> intDB f l n fz (fs, i) 
+>    = pl_app f l (RVar f l fs Unknown) i [intDB f l (n-1) fz (fs,i)]
+
+> pl_app f l fn ps args = mkApp f l fn (take ps (repeat RPlaceholder) ++ args)
 
 > unlet :: Id -> Int -> Id -> Int -> Id -> RawTerm -> RawTerm -> Bool ->
->             State (Int, Int) RawTerm
-> unlet var vi lt li nm val sc lamtoo
+>          (Id, Int) -> (Id, Int) ->
+>          State (Int, Int) RawTerm
+> unlet var vi lt li nm val sc lamtoo fz fs
 >     = do let sc' = unl sc 0
 >          return $ mkApp "[let]" 0 
 >                     (RVar "[let]" 0 lt Unknown) 
@@ -1324,7 +1344,7 @@ in our list of explicit names to add, add it.
 >   where
 >     unl tm@(RVar f l x ty) i
 >         | x == nm = mkApp f l (RVar f l var Unknown) 
->                       ((take vi (repeat RPlaceholder)) ++ [intDB f l i])
+>                       ((take vi (repeat RPlaceholder)) ++ [intDB f l i fz fs])
 >         | otherwise = tm
 >     unl (RApp f l fn arg) i = RApp f l (unl fn i) (unl arg i)
 >     unl (RAppImp f l n fn arg) i = RAppImp f l n (unl fn i) (unl arg i)
@@ -1338,7 +1358,7 @@ in our list of explicit names to add, add it.
 >     unl (RInfix f l op x y) i = RInfix f l op (unl x i) (unl y i)
 >     unl (RUserInfix f l b op x y) i = RUserInfix f l b op (unl x i) (unl y i)
 >     unl (RDo ds) i = RDo (map (unldo i) ds)
->     unl (RDSLdef b r p a v l lt d) i = RDSLdef b r p a v l lt (unl d i)
+>     unl (RDSLdef f d) i = RDSLdef f (unl d i)
 >     unl (RIdiom t) i = RIdiom (unl t i)
 >     unl (RPure t) i = RPure (unl t i)
 >     unl x i = x
@@ -1346,12 +1366,6 @@ in our list of explicit names to add, add it.
 >     unldo i (DoBinding f l n x y) = DoBinding f l n (unl x i) (unl y i)
 >     unldo i (DoLet f l n x y) = DoLet f l n (unl x i) (unl y i)
 >     unldo i (DoExp f l e) = DoExp f l (unl e i)
-
->     intDB f l 0 = RApp f l (RVar f l (UN "fO") Unknown) RPlaceholder
->     intDB f l n = RApp f l (RApp f l (RVar f l (UN "fS") Unknown) RPlaceholder)
->                            (intDB f l (n-1))
-
-
 
 > unidiom :: UndoInfo -> RawTerm -> RawTerm
 > unidiom ui (RApp file line f (RPure x)) 
