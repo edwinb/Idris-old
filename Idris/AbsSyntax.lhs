@@ -271,6 +271,7 @@ Raw terms, as written by the programmer with no implicit arguments added.
 >                        dsl_apply :: Maybe Id,
 >                        dsl_variable :: Maybe Id,
 >                        dsl_lambda :: Maybe Id,
+>                        dsl_outerlam :: Maybe Id,
 >                        dsl_let :: Maybe Id,
 >                        dsl_zero :: Maybe Id,
 >                        dsl_succ :: Maybe Id }
@@ -777,6 +778,7 @@ names, then there's no need for the implicit bit.
 >                      uiapply :: (Id, Int),
 >                      uivar :: (Maybe Id, Int),
 >                      uilam :: (Maybe Id, Int),
+>                      uiinlam :: (Maybe Id, Int),
 >                      uilet :: (Maybe Id, Int),
 >                      uizero :: (Id, Int),
 >                      uisucc :: (Id, Int)
@@ -838,7 +840,7 @@ programmer doesn't have to write them down inside the param block.
 > ionamei n = toIvorName (ioname n)
 
 > defDo = UI (bindName, 2) (retName, 1) (retName, 1) (applyName, 2) 
->            (Nothing, 0) (Nothing, 0) (Nothing, 0)
+>            (Nothing, 0) (Nothing, 0) (Nothing, 0) (Nothing, 0)
 >            (fzName, 1)  (fsName, 1)
 
 Give names to unnamed metavariables, and record any associated proof
@@ -927,18 +929,18 @@ scripts
 >     toIvorS ui (RVar f l n ty) = return $ Annotation (FileLoc f l) (Name ty (toIvorName n))
 >     toIvorS ui (RVars f l ns) = return $ Annotation (FileLoc f l) (Overloaded (map toIvorName ns))
 >     toIvorS ui ap@(RApp file line f a)
->            = do f' <- toIvorS ui f
->                 a' <- toIvorS ui a
+>            = do f' <- toIvorS (inner ui) f
+>                 a' <- toIvorS (inner ui) a
 >                 return (Annotation (FileLoc file line) (App f' a'))
 >     toIvorS ui (RBind (MN "X" 0) (Pi _ _ ty) sc) 
->            = do ty' <- toIvorS ui ty
->                 sc' <- toIvorS ui sc
+>            = do ty' <- toIvorS (inner ui) ty
+>                 sc' <- toIvorS (inner ui) sc
 >                 (i, x) <- get
 >                 put (i+1, x)
 >                 return $ Forall (toIvorName (MN "X" i)) ty' sc'
 >     toIvorS ui (RBind n (Pi _ _ ty) sc) 
->            = do ty' <- toIvorS ui ty
->                 sc' <- toIvorS ui sc
+>            = do ty' <- toIvorS (inner ui) ty
+>                 sc' <- toIvorS (inner ui) sc
 >                 return $ Forall (toIvorName n) ty' sc'
 >     toIvorS ui (RBind n (Lam ty) sc) 
 >        = case (getLamOverload ui, ty) of
@@ -953,11 +955,11 @@ scripts
 >        = case (getLetOverload ui, ty) of
 >            (Just (var, vari, lam, lami), RPlaceholder) -> 
 >               do tm <- unlet var vari lam lami n val sc (existlam ui) (uizero ui) (uisucc ui)
->                  toIvorS ui tm
+>                  toIvorS (inner ui) tm
 >            (Nothing, _) ->
->               do ty' <- toIvorS ui ty
->                  val' <- toIvorS ui val
->                  sc' <- toIvorS ui sc
+>               do ty' <- toIvorS (inner ui) ty
+>                  val' <- toIvorS (inner ui) val
+>                  sc' <- toIvorS (inner ui) sc
 >                  return $ Let (toIvorName n) ty' val' sc'
 >     toIvorS ui (RConst _ _ c) = return $ toIvorConst c
 >     toIvorS ui RPlaceholder = return Placeholder
@@ -967,48 +969,52 @@ scripts
 >                      return $ Metavar (toIvorName (mkName fname h))
 >     toIvorS ui (RMetavar n) = return $ Metavar (toIvorName n)
 >     toIvorS ui (RInfix file line JMEq l r) 
->                 = do l' <- toIvorS ui l
->                      r' <- toIvorS ui r
+>                 = do l' <- toIvorS (inner ui) l
+>                      r' <- toIvorS (inner ui) r
 >                      return $ Annotation (FileLoc file line) 
 >                                 (apply (Name Unknown (opFn JMEq)) 
 >                                 [Placeholder, Placeholder,l',r'])
 >     toIvorS ui (RInfix file line OpEq l r) 
->                 = do l' <- toIvorS ui l
->                      r' <- toIvorS ui r
+>                 = do l' <- toIvorS (inner ui) l
+>                      r' <- toIvorS (inner ui) r
 >                      return $ Annotation (FileLoc file line)
 >                                 (apply (Name Unknown (opFn OpEq))
 >                                 [Placeholder,l',r'])
 >     toIvorS ui (RInfix file line op l r) 
->                 = do l' <- toIvorS ui l
->                      r' <- toIvorS ui r
+>                 = do l' <- toIvorS (inner ui) l
+>                      r' <- toIvorS (inner ui) r
 >                      return $ Annotation (FileLoc file line)
 >                               (apply (Name Unknown (opFn op)) [l',r'])
 >     toIvorS ui (RDo dos) = do tm <- undo ui dos
->                               toIvorS ui tm
+>                               toIvorS (inner ui) tm
 >     toIvorS ui (RReturn f l)
 >       = do let (ret, retImpl) = uireturn ui
->            toIvorS ui $ mkApp f l (RVar f l ret Unknown) (take retImpl (repeat RPlaceholder))
->     toIvorS ui (RIdiom tm) = do let tm' = unidiom ui tm
->                                 toIvorS ui tm'
->     toIvorS ui (RPure t) = toIvorS ui t
+>            toIvorS (inner ui) $ mkApp f l (RVar f l ret Unknown) (take retImpl (repeat RPlaceholder))
+>     toIvorS ui (RIdiom tm) = do let tm' = unidiom (inner ui) tm
+>                                 toIvorS (inner ui) tm'
+>     toIvorS ui (RPure t) = toIvorS (inner ui) t
 >     toIvorS ui RRefl = return $ apply (Name Unknown (name "refl")) [Placeholder]
 >     toIvorS ui (RError f l x) = error (f ++ ":" ++ show l ++ ":" ++ x)
->     toIvorS ui (RDSLdef (DSLdef b r p a v l lt z s) tm) = toIvorS (update ui b r p a v l lt z s) tm
+>     toIvorS ui (RDSLdef (DSLdef b r p a v l il lt z s) tm) 
+>        = toIvorS (update ui b r p a v l il lt z s) tm
 >     toIvorS ui x = error ("Can't happen, toIvorS: " ++ show x)
 
->     update (UI (b, bi) (r, ri) (p, pi) (a, ai) (v, vi) (l, li) (lt, lti)
->                (z, zi) (s, si))
->            bind ret pure ap var lam letb zero succ =
->         let b' = new bind b bi
->             r' = new ret r ri
->             p' = new pure p pi
->             a' = new ap a ai
->             z' = new zero z zi
->             s' = new succ s si
->             v' = newM var v vi
->             l' = newM lam l li 
->             lt' = newM letb lt lti in
->         (UI b' r' p' a' v' l' lt' z' s')
+>     inner ui = ui { uilam = uiinlam ui }
+
+>     update (UI (b, bi) (r, ri) (p, pi) (a, ai) (v, vi) (l, li) (inl, inli) 
+>                (lt, lti) (z, zi) (s, si))
+>            bind ret pure ap var lam inlam letb zero succ =
+>         let b' = new bind bindName 2
+>             r' = new ret retName 1
+>             p' = new pure retName 1
+>             a' = new ap applyName 2
+>             z' = new zero fzName 1
+>             s' = new succ fsName 1
+>             v' = newM var Nothing vi
+>             l' = newM lam Nothing li 
+>             il' = newM inlam Nothing inli
+>             lt' = newM letb Nothing lti in
+>         (UI b' r' p' a' v' l' il' lt' z' s')
 
 >     new Nothing x xi = (x, xi)
 >     new (Just n) _ _ = case ctxtLookupName ctxt (thisNamespace using) n of
@@ -1024,8 +1030,11 @@ scripts
 >     mkName (MN n j) i = MN (n++"_"++show i) j
 
 >     getLamOverload ui =
->         case (uivar ui, uilam ui) of
->           ((Just var, vi), (Just lam, li)) -> Just (var, vi, lam, li)
+>         case (uivar ui, uilam ui, uiinlam ui) of
+>           ((Just var, vi), (Just lam, li), _) -> 
+>               Just (var, vi, lam, li)
+>           ((Just var, vi), _, (Just lam, li)) -> 
+>               Just (var, vi, lam, li)
 >           _ -> Nothing
 >     getLetOverload ui =
 >         case (uivar ui, uilet ui) of
@@ -1292,7 +1301,8 @@ in our list of explicit names to add, add it.
 >               return $ mkApp file line (RVar file line bind Unknown) 
 >                          ((take bindimpl (repeat RPlaceholder)) ++ [exp, k])
 
-> unlambda :: Id -> Int -> Id -> Int -> Id -> RawTerm -> Bool ->
+> unlambda :: Id -> Int -> Id -> Int ->
+>             Id -> RawTerm -> Bool ->
 >             (Id, Int) -> (Id, Int) ->
 >             State (Int, Int) RawTerm
 > unlambda var vi lam li nm sc lettoo fz fs
@@ -1651,3 +1661,6 @@ Everything else, we ony work at the top level.
 > fixFix' _ x = x
 
 > (!!!) xs (x, msg) = if x >= length xs then error msg else xs!!x
+
+> traceIf b t v | b = trace t v
+>               | otherwise = v

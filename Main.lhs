@@ -242,6 +242,12 @@ Command; minimal abbreviation; function to run it; description; visibility
 > latex ist ctxt _
 >           = do putStrLn "Please give input and output files"
 >                return Continue
+> debug ist ctxt (name:[])
+>           = do let raw = idris_context ist
+>                case ctxtLookup raw [] (UN name) of
+>                  Left _ -> putStrLn "Not found"
+>                  Right ifn -> print ifn
+>                return Continue
 > debug ist ctxt []
 >           = do putStrLn "Fixities/transforms\n"
 >                print (idris_fixities ist)

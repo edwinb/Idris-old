@@ -84,13 +84,15 @@ using (G:Vect Ty n) {
       variable = Var
       apply = App
       pure = id
+      index_first = fO
+      index_next = fS
   }
 
   -- Some test functions:
   -- 1. Add two inputs.
 
   test : Expr G (TyFun TyInt (TyFun TyInt TyInt));
-  test = lam (\x => \y => Op (+) x y );
+  test = lam (\x, y => Op (+) x y );
 
   -- 2. Double a value by calling 'test'.
 
