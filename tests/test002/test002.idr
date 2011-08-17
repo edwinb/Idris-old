@@ -42,12 +42,12 @@ using (G:Vect Ty n) {
   -- well as their types. Env is an environment, indexed over the
   -- types in scope.
 
-  data Env : (Vect Ty n) -> Set where
-     Empty : (Env VNil)
-   | Extend : (res:interpTy T) -> (Env G) -> 
-	      (Env (T :: G));
+  data Env : Vect Ty n -> Set where
+     Empty : Env VNil
+   | Extend : (res:interpTy T) -> Env G -> 
+	      Env (T :: G);
 
-  envLookup : (i:Fin n) -> (Env G) -> (interpTy (vlookup i G));
+  envLookup : (i:Fin n) -> Env G -> interpTy (vlookup i G);
   envLookup fO (Extend t env) = t;
   envLookup (fS i) (Extend t env) = envLookup i env;
 

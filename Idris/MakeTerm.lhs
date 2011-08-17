@@ -10,7 +10,7 @@
 
 > import Control.Monad
 > import Control.Monad.State
-> import List
+> import Data.List
 
 Work out how many implicit arguments we need, then translate our definition
 into an ivor definition, with all the necessary placeholders added.

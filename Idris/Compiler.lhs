@@ -8,11 +8,12 @@
 > import Idris.Lib
 > import Ivor.TT hiding (transform, SimpleCase(..), CaseAlt(..))
 
-> import System
+> import System.Exit
+> import System.Process
 > import System.IO
 > import System.Environment
 > import System.Directory
-> import Monad
+> import Control.Monad
 > import Debug.Trace
 
 Get every definition from the context. Convert them all to simple case

@@ -9,9 +9,9 @@
 > import Control.Monad.State
 > import Data.Typeable
 > import Debug.Trace
-> import Maybe
+> import Data.Maybe
 
-> import List
+> import Data.List
 
 This is the language we're converting directly into Epic code, and the
 output of the lambda lifter

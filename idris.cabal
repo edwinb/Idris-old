@@ -49,10 +49,10 @@ Library
         Other-modules:   Paths_idris
 
         Build-depends:   base>=4 && <5, containers, array, parsec, mtl,
-                         readline, ivor>=0.1.14, directory, haskell98,
+                         readline, ivor>=0.1.14, directory, process,
                          old-time, old-locale, binary, epic>=0.1.7, Cabal
                                 
-        Extensions:      MagicHash, UndecidableInstances, OverlappingInstances, PatternGuards
+        Extensions:      MagicHash, UndecidableInstances, OverlappingInstances, PatternGuards, BangPatterns
 
 Executable     idris
                Main-is: Main.lhs
@@ -65,8 +65,8 @@ Executable     idris
                               Idris.PartialEval
 
                Build-depends:   base>=4 && <5, containers, array, parsec, mtl,
-                                readline, ivor>=0.1.14, directory, haskell98,
+                                readline, ivor>=0.1.14, directory, process,
                                 old-time, old-locale, binary, epic>=0.1.6, Cabal
                                 
-               Extensions:      MagicHash, UndecidableInstances, OverlappingInstances, PatternGuards
+               Extensions:      MagicHash, UndecidableInstances, OverlappingInstances, PatternGuards, BangPatterns
                ghc-prof-options: -auto-all

@@ -6,7 +6,7 @@ module Idris.Parser where
 import Data.Char
 import Ivor.TT
 import System.IO.Unsafe
-import List
+import Data.List
 import Control.Monad
 
 import Idris.AbsSyntax

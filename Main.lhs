@@ -3,7 +3,8 @@
 > import Ivor.TT hiding (transform)
 > import Ivor.Shell
 
-> import System
+> import System.Exit
+> import System.Process
 > import System.Environment
 > import System.Time
 > import System.Locale
@@ -11,11 +12,11 @@
 > import System.Console.Readline
 > import Data.Typeable
 > import Data.Binary
-> import Char
+> import Data.Char
 > import Control.Monad
 > import Control.Exception
-> import List
-> import Maybe
+> import Data.List
+> import Data.Maybe
 > import Debug.Trace
 > import Distribution.Version
 > import Prelude hiding (catch)

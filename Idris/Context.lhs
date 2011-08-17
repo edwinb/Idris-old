@@ -10,7 +10,7 @@
 > import Data.Typeable
 > import Control.Monad
 
-> import Char
+> import Data.Char
 
 > import Debug.Trace
 

@@ -16,7 +16,7 @@ would take effect.
 
 > import Ivor.TT
 
-> import Maybe
+> import Data.Maybe
 > import Debug.Trace
 
 > data SCTrans = SCTrans String (SCBody -> SCBody)

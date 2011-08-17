@@ -10,7 +10,7 @@
 > import Data.Typeable
 > import Data.Maybe
 > import Data.List
-> import Char
+> import Data.Char
 
 > import Ivor.TT
 > import Ivor.Primitives

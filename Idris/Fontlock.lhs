@@ -1,7 +1,7 @@
 > module Idris.Fontlock(htmlise,latexise) where
 
 > import Data.Char
-> import List
+> import Data.List
 
 > import Idris.AbsSyntax
 > import Idris.Lexer

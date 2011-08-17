@@ -9,8 +9,8 @@ Apply Forcing/Detagging/Collapsing optimisations from Edwin Brady's thesis.
 > import Ivor.TT hiding (transform)
 > import qualified Ivor.ViewTerm(transform)
 
-> import Maybe
-> import List
+> import Data.Maybe
+> import Data.List
 
 > import Debug.Trace
 

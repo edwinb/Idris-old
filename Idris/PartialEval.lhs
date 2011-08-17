@@ -9,8 +9,8 @@ and %freeze annotations.
 > import Idris.AbsSyntax
 > import Ivor.TT as TT
 
-> import Maybe
-> import List
+> import Data.Maybe
+> import Data.List
 > import Control.Monad.State
 > import Debug.Trace
 

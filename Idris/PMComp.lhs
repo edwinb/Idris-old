@@ -10,7 +10,7 @@ Pattern matching compiler, convert to simple case expressions
 > import Data.Typeable
 > import Debug.Trace
 > import Control.Monad.State
-> import List hiding (partition)
+> import Data.List hiding (partition)
 
 Simple case statements are either a case analysis, just a term. ErrorCase 
 and Impossible are distinct in that 'Impossible' should be the default 
