@@ -53,6 +53,7 @@ Library
                          old-time, old-locale, binary, epic>=0.1.7, Cabal
                                 
         Extensions:      MagicHash, UndecidableInstances, OverlappingInstances, PatternGuards, BangPatterns
+        Build-tools:     happy
 
 Executable     idris
                Main-is: Main.lhs

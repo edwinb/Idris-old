@@ -1,4 +1,4 @@
-sumaS = \ acc[0] : Int => \ xs[0] : List Int => if_then_else (empty xs[0]) acc[0] (sumaS (head xs[0]+acc[0]) (tail xs[0]))
+sumaS = \ acc[0] : Int => \ xs[0] : List Int => if_then_else (empty xs[0]) acc[0] (sumaS (__addInt (head xs[0]) acc[0]) (tail xs[0]))
 
 Compiles as:
 

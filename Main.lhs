@@ -60,6 +60,10 @@ Load things in this order:
 >           (ctxt, defs) <- processInput ctxt (initState opts) "builtins.idr"
 >           ctxt <- ioTac $ prims ctxt
 >           (ctxt, defs) <- processInput ctxt defs "prelude.idr"
+>           reloadMain infile ctxt defs batch
+
+> reloadMain :: String -> Context -> IdrisState -> Args -> IO ()
+> reloadMain infile ctxt defs batch = do
 >           (ctxt, defs) <- processInput ctxt defs infile
 >           let vars = idris_metavars defs
 >           when (not (null vars)) $

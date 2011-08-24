@@ -217,7 +217,6 @@ lexer cont ('[':cs) = cont TokenOSB cs
 lexer cont (']':cs) = cont TokenCSB cs
 lexer cont ('?':'=':cs) = cont TokenMightEqual cs
 lexer cont (';':cs) = cont TokenSemi cs
-lexer cont ('\\':cs) = cont TokenLambda cs
 lexer cont ('#':'(':cs) = cont TokenHashOB cs
 -- lexer cont ('#':cs) = cont TokenType cs
 lexer cont (',':cs) = cont TokenComma cs
@@ -337,6 +336,7 @@ lexOp cont cs = case span isOpChar cs of
 --                   ("==",rest) -> cont TokenEQ rest
                    (">",rest) -> cont TokenGT rest
                    ("<",rest) -> cont TokenLT rest
+                   ("\\",rest) -> cont TokenLambda rest
 --                   (">=",rest) -> cont TokenGE rest
 --                   ("<=",rest) -> cont TokenLE rest
 --                   ("++",rest) -> cont TokenConcat rest
@@ -356,7 +356,7 @@ lexOp cont cs = case span isOpChar cs of
                    ("~", rest) -> cont TokenTilde rest
                    (op,rest) -> cont (TokenInfixName op) rest
 
-isOpPrefix c = c `elem` ":+-*/=_.?|&><!@$%^~#"
+isOpPrefix c = c `elem` ":+-*/=_.?|&><!@$%^~#\\"
 isOpChar = isOpPrefix
 
 lexBrackVar cont cs =

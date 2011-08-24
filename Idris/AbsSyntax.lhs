@@ -1439,8 +1439,8 @@ Now built-in operators
 >         | v == opFn JMEq = RInfix "[val]" 0 JMEq x y
 >     unI (Name _ v) [_,x,y]
 >         | v == opFn OpEq = RInfix "[val]" 0 OpEq x y
->     unI (Name _ v) [x,y]
->         | Just op <- getOp v allOps = RInfix "[val]" 0 op x y
+>     -- unI (Name _ v) [x,y]
+>     --    | Just op <- getOp v allOps = RInfix "[val]" 0 op x y
 >     unI (Name _ v) args 
 >        = case ctxtLookup ctxt [] (mkRName v) of
 >            Right fdata -> mkImpApp "[val]" 0 (implicitArgs fdata) 
