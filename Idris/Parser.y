@@ -54,6 +54,7 @@ import Debug.Trace
       lpair           { TokenLPair }
       rpair           { TokenRPair }
       exists          { TokenExists }
+      forall          { TokenForall }
       '~'             { TokenTilde }
       '+'             { TokenPlus }
       '-'             { TokenMinus }
@@ -176,7 +177,7 @@ import Debug.Trace
 -- All the things I don't want to cause a reduction inside a lam...
 %nonassoc name inttype chartype floattype stringtype int char string float bool refl do dsl type ltype
           empty unit '_' ptrtype handletype locktype metavar NONE brackname lazy
-          oid '~' lpair PAIR return transarrow exists proof
+          oid '~' lpair PAIR return transarrow exists proof forall
 %left APP
 %nonassoc if then else
 
@@ -436,6 +437,9 @@ InfixTerm : '-' Term File Line %prec NEG { RInfix $3 $4 Minus (RConst $3 $4 (Num
           | Term '>' Term File Line { RUserInfix $4 $5 False ">" $1 $3 }
 --          | Term ge Term File Line { RInfix $4 $5  OpGEq $1 $3 }
           | Term arrow Term File Line { RBind (MN "X" 0) (Pi Ex [] $1) $3 }
+          | forall '(' TypedBinds ')' arrow Term
+                { doBind (Pi Ex []) $3 $6 }
+--          | Term arrow Term File Line { RBind (MN "X" 0) (Pi Ex [] $1) $3 }
           | UserInfixTerm { $1 }
           | NoAppTerm '=' NoAppTerm File Line { RInfix $4 $5 JMEq $1 $3 }
 
@@ -515,6 +519,8 @@ TypeTerm :: { RawTerm }
 TypeTerm : TypeTerm arrow TypeTerm { RBind (MN "X" 0) (Pi Ex [] $1) $3 }
          | '(' TypedBinds ')' ArgOpts arrow TypeTerm
                 { doBind (Pi Ex $4) $2 $6 }
+         | forall '(' TypedBinds ')' ArgOpts arrow TypeTerm
+                { doBind (Pi Ex $5) $3 $7 }
          | lazybracket TypedBinds ')' arrow TypeTerm
                 { doBind (Pi Ex [Lazy]) $2 $5 }
          | '(' TypeTerm ')' { bracket $2 }

@@ -93,6 +93,7 @@ data Token
       | TokenOCB
       | TokenCCB
       | TokenHashOB
+      | TokenForall
       | TokenLPair
       | TokenRPair
       | TokenOSB
@@ -303,6 +304,7 @@ lexVar cont cs =
       ("infixl",rest) -> cont TokenInfixL rest
       ("infixr",rest) -> cont TokenInfixR rest
       ("exists",rest) -> cont TokenExists rest
+      ("forall",rest) -> cont TokenForall rest
 -- Types
       ("Set",rest) -> cont TokenType rest
       ("LSet",rest) -> cont TokenLType rest

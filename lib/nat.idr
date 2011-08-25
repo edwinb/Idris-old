@@ -31,15 +31,15 @@ natToInt (S k) = 1+(natToInt k);
 
 ----------- plus theorems -----------
 
-plus_nO : (n:Nat) -> ((plus n O) = n);
+plus_nO : forall (n:Nat) -> ((plus n O) = n);
 plus_nO O = (refl O);
 plus_nO (S n) = eq_resp_S (plus_nO n);
 
-plus_nSm : (m:Nat, n:Nat) -> ((plus n (S m)) = (S (plus n m)));
+plus_nSm : forall (m:Nat, n:Nat) -> ((plus n (S m)) = (S (plus n m)));
 plus_nSm m O     = refl (S m);
 plus_nSm m (S k) = eq_resp_S (plus_nSm m k);
 
-plus_comm : (x:Nat, y:Nat) -> (plus x y = plus y x);
+plus_comm : forall (x:Nat, y:Nat) -> (plus x y = plus y x);
 plus_comm proof {
         %intro; %induction x;
 	%rewrite <- plus_nO y;
@@ -51,7 +51,7 @@ plus_comm proof {
 	%qed;
 };
 
-plus_assoc  : (m:Nat, n:Nat, p:Nat) -> (plus m (plus n p) = plus (plus m n) p);
+plus_assoc  : forall (m:Nat, n:Nat, p:Nat) -> (plus m (plus n p) = plus (plus m n) p);
 plus_assoc proof {
         %intro;
         %induction m;
