@@ -432,6 +432,8 @@ Finally some primitive operations on primitive types.
 >         | StringLength | StringGetIndex | StringSubstr
 >         | StringHead | StringTail | StringCons | StringRev
 >         | StringFind | StringSub
+
+>         | FloatExp | FloatLog
 >    deriving (Eq, Enum)
 
 > allOps = [Plus,Minus,Times,Divide,Modulo,FPlus,FMinus,FTimes,FDivide,
@@ -507,6 +509,9 @@ Finally some primitive operations on primitive types.
 > opFn StringFind = (name "__strFind")
 > opFn StringSub = (name "__substr")
 > opFn StringCons = (name "__strCons")
+
+> opFn FloatExp = (name "__floatExp")
+> opFn FloatLog = (name "__floatLog")
 
 > useropFn fn = UN $ "__op_" ++ concat (map opC fn) where
 >     opC c = "_" ++ show (fromEnum c)

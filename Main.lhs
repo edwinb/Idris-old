@@ -508,6 +508,8 @@ the appropriate thing, after applying the relevant transformations.
 >              c <- addExternalFn c (opFn StringRev) 1 stringRev "String->String"
 >              c <- addExternalFn c (opFn StringSub) 3 stringSub "String->Int->Int->String"
 >              c <- addExternalFn c (opFn StringFind) 2 stringFind "String->Char->Int"
+>              c <- addExternalFn c (opFn FloatExp) 1 floatExp "Float->Float"
+>              c <- addExternalFn c (opFn FloatLog) 1 floatLog "Float->Float"
 >              c <- addExternalFn c (name "__Prove_Anything") 3 proveAnything
 >                                   "(A:*)->(B:*)->A->B"
 >              c <- addExternalFn c (name "__lazy") 1 runLazy "(A:*)A->A"
@@ -716,6 +718,16 @@ the appropriate thing, after applying the relevant transformations.
 >                       Nothing -> Just (Constant ((-1) :: Int))
 >                   _ -> Nothing
 > stringFind _ = Nothing
+
+> floatExp :: [ViewTerm] -> Maybe ViewTerm
+> floatExp [Constant x] = case cast x :: Maybe Double of
+>                            Just i -> Just (Constant (exp i))
+>                            _ -> Nothing
+
+> floatLog :: [ViewTerm] -> Maybe ViewTerm
+> floatLog [Constant x] = case cast x :: Maybe Double of
+>                            Just i -> Just (Constant (log i))
+>                            _ -> Nothing
 
 > proveAnything :: [ViewTerm] -> Maybe ViewTerm
 > proveAnything [_,_,x] = Just x

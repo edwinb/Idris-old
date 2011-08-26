@@ -92,6 +92,12 @@ mod x y = __modInt x y;
 (==.) : Float -> Float -> Bool; [inline]
 (==.) x y = __feq x y;
 
+exp : Float -> Float; [inline]
+exp x = __floatExp x;
+
+log : Float -> Float; [inline]
+log x = __floatLog x;
+
 -- String primitives
 
 (++) : String -> String -> String; [inline]

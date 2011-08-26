@@ -271,6 +271,11 @@ HACK for string equality
 >     | n == name "__strRev" =
 >         "__epic_strrev("++writeSC' arg1++ ")"
 
+>     | n == opFn FloatExp =
+>         "__epic_floatExp("++writeSC' arg1++ ")"
+>     | n == opFn FloatLog =
+>         "__epic_floatLog("++writeSC' arg1++ ")"
+
 >   writeSC' (SApp b args) = "(" ++ writeSC' b ++")(" ++ list args ++ ")"
 >       where list [] = ""
 >             list [a] = writeSC' a
