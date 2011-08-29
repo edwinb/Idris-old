@@ -98,6 +98,8 @@ exp x = __floatExp x;
 log : Float -> Float; [inline]
 log x = __floatLog x;
 
+%lib "--lm"
+
 -- String primitives
 
 (++) : String -> String -> String; [inline]
