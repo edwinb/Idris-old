@@ -169,7 +169,7 @@ element in a "Vect", we could implement it as follows: --}
 {->
 vlookup : Fin n -> Vect a n -> a;
 vlookup fO     (x :: xs) = x;
-vlookup (fS n) (x :: xs) = vlookup n xs;
+vlookup (fS k) (x :: xs) = vlookup k xs;
 >-}
 
 {-- This function looks up a value at a given location in a
